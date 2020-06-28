@@ -1,7 +1,6 @@
 = Building a Spring Boot Application
 
 == Learning Outcomes
-
    After completing the lab, you will be able to:
 
  . Describe how to create runnable Spring Boot application
