@@ -135,8 +135,101 @@ Downloading docker images takes a while, so let's kick this off so we make sure 
 2. `docker pull mcr.microsoft.com/dotnet/core/sdk:3.1-alpine`
 3. `docker pull mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine`
 
+## PKS CLI
+
+[Pivotal Networks](https://network.pivotal.io/products/pivotal-container-service) -- download CLI tool here.
+[PKS Documentation](https://docs.pivotal.io/runtimes/pks/)
+
+```
+$ pks
+
+The Pivotal Container Service (PKS) CLI is used to create, manage, and delete Kubernetes clusters. To deploy workloads to a Kubernetes cluster created using the PKS CLI, use the Kubernetes CLI, kubectl.
+
+Version: 1.2.1-build.8
+
+Usage:
+  pks [command]
+
+Available Commands:
+  cluster                View the details of the cluster
+  clusters               Show all clusters created with PKS
+  create-cluster         Creates a kubernetes cluster, requires cluster name, an external host name, and plan
+  create-network-profile Create a network profile
+  delete-cluster         Deletes a kubernetes cluster, requires cluster name
+  delete-network-profile Delete a network profile
+  get-credentials        Allows you to connect to a cluster and use kubectl
+  help                   Help about any command
+  login                  Log in to PKS
+  logout                 Log out of PKS
+  network-profiles       Show all network profiles created with PKS
+  plans                  View the preconfigured plans available
+  resize                 Increases the number of worker nodes for a cluster
+
+Flags:
+  -h, --help      help for pks
+      --version   version for pks
+
+Use "pks [command] --help" for more information about a command.
+
+```
+
+```
+$ pks login -a ${PKS_ENDPOINT} -u ${PKS_USER} -p ${PKS_PASSWORD} -k
+
+API Endpoint: api.pks.dev.pivdevops.com
+User: admin
+```
+
+```
+$ pks clusters
+
+Name  Plan Name  UUID                                  Status     Action
+a     medium     5b61a743-dc3c-4bfe-8662-f68aea7b9885  succeeded  CREATE
+```
+
+```
+$ pks cluster a
+
+Name:                     a
+Plan Name:                medium
+UUID:                     5b61a743-dc3c-4bfe-8662-f68aea7b9885
+Last Action:              CREATE
+Last Action State:        succeeded
+Last Action Description:  Instance provisioning completed
+Kubernetes Master Host:   a.dev.pivdevops.com
+Kubernetes Master Port:   8443
+Worker Nodes:             3
+Kubernetes Master IP(s):  10.0.8.5
+
+```
+
+```
+$ pks get-credentials a
+
+Fetching credentials for cluster a.
+Context set for cluster a.
+
+You can now switch between clusters by using:
+$kubectl config use-context <cluster-name>
+```
+
+This segues into `kubectl` nicely...
+
+## kubectl CLI
+
+* Installation
+```
+curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+```
+* Authentication, explain `~/.kube/config` 
+* Extremely brief here, because they don't know what to do with `kubectl` since they haven't really be introduced to Kubernetes yet.
+
+
+
 
 Help your neighbor
 ------------------
 
-There's someone sitting next to you who's struggling with this.  Let's pair and help each other.  When that machine is running, let's all celebrate and join another team.  At the end, we'll celebrate around the last machine.
+There's someone sitting next to you who's struggling with this.  Let's pair and help each other.  When that machine is running, let's all celebrate and join another team.  
