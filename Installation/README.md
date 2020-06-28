@@ -179,8 +179,9 @@ Flags:
 Use "pks [command] --help" for more information about a command.
 $ pks login -a ${PKS_ENDPOINT} -u ${PKS_USER} -p ${PKS_PASSWORD} -k
 
-API Endpoint: api.pks.dev.pivdevops.com
-User: admin
+API Endpoint: api.pks.nilanjan.in
+User: palpks
+Password : *********
 ```
 
 ```
