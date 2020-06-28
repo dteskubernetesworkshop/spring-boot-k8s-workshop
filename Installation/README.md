@@ -145,12 +145,13 @@ $ pks
 
 The Pivotal Container Service (PKS) CLI is used to create, manage, and delete Kubernetes clusters. To deploy workloads to a Kubernetes cluster created using the PKS CLI, use the Kubernetes CLI, kubectl.
 
-Version: 1.2.1-build.8
+Version: 1.6.0-build.225
 
 Usage:
   pks [command]
 
 Available Commands:
+  cancel-task            Cancel a task
   cluster                View the details of the cluster
   clusters               Show all clusters created with PKS
   create-cluster         Creates a kubernetes cluster, requires cluster name, an external host name, and plan
@@ -158,22 +159,24 @@ Available Commands:
   delete-cluster         Deletes a kubernetes cluster, requires cluster name
   delete-network-profile Delete a network profile
   get-credentials        Allows you to connect to a cluster and use kubectl
+  get-kubeconfig         Allows you to get kubeconfig for your username
   help                   Help about any command
   login                  Log in to PKS
   logout                 Log out of PKS
+  network-profile        View a network profile
   network-profiles       Show all network profiles created with PKS
   plans                  View the preconfigured plans available
-  resize                 Increases the number of worker nodes for a cluster
+  resize                 Changes the number of worker nodes for a cluster
+  task                   View a task
+  update-cluster         Updates the configuration of a specific kubernetes cluster
+  upgrade-cluster        Upgrades the kubernetes cluster
+  upgrade-clusters       Upgrades the kubernetes clusters
 
 Flags:
   -h, --help      help for pks
       --version   version for pks
 
 Use "pks [command] --help" for more information about a command.
-
-```
-
-```
 $ pks login -a ${PKS_ENDPOINT} -u ${PKS_USER} -p ${PKS_PASSWORD} -k
 
 API Endpoint: api.pks.dev.pivdevops.com
@@ -183,35 +186,34 @@ User: admin
 ```
 $ pks clusters
 
-Name  Plan Name  UUID                                  Status     Action
-a     medium     5b61a743-dc3c-4bfe-8662-f68aea7b9885  succeeded  CREATE
+PKS Version     Name          k8s Version  Plan Name  UUID                                  Status     Action
+1.6.0-build.17  pks-workshop  1.15.5       small      1e1f2162-577f-409b-bd9c-3e358579d97d  succeeded  UPGRADE
 ```
 
 ```
-$ pks cluster a
+$ pks cluster pks-workshop
 
-Name:                     a
-Plan Name:                medium
-UUID:                     5b61a743-dc3c-4bfe-8662-f68aea7b9885
-Last Action:              CREATE
+PKS Version:              1.6.0-build.17
+Name:                     pks-workshop
+K8s Version:              1.15.5
+Plan Name:                small
+UUID:                     1e1f2162-577f-409b-bd9c-3e358579d97d
+Last Action:              UPGRADE
 Last Action State:        succeeded
-Last Action Description:  Instance provisioning completed
-Kubernetes Master Host:   a.dev.pivdevops.com
+Last Action Description:  Instance upgrade completed
+Kubernetes Master Host:   pks-workshop-lb-0d6dbe4769d173fc.elb.us-east-1.amazonaws.com
 Kubernetes Master Port:   8443
 Worker Nodes:             3
-Kubernetes Master IP(s):  10.0.8.5
+Kubernetes Master IP(s):  10.0.8.9
+Network Profile Name:     
 
-```
+$ pks get-credentials pks-workshop  
 
-```
-$ pks get-credentials a
-
-Fetching credentials for cluster a.
-Context set for cluster a.
+Fetching credentials for cluster pks-workshop.
+Context set for cluster pks-workshop.
 
 You can now switch between clusters by using:
 $kubectl config use-context <cluster-name>
-```
 
 This segues into `kubectl` nicely...
 
@@ -223,6 +225,15 @@ curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s htt
 chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin/kubectl
 ```
+$ kubectl cluster-info 
+Kubernetes master is running at https://pks-workshop-lb-0d6dbe4769d173fc.elb.us-east-1.amazonaws.com:8443
+CoreDNS is running at https://pks-workshop-lb-0d6dbe4769d173fc.elb.us-east-1.amazonaws.com:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+Set an alias for kubectl :
+vi ~/.bashrc 
+add the line where you see other aliases :
+alias k='kubectl' 
+
 * Authentication, explain `~/.kube/config` 
 * Extremely brief here, because they don't know what to do with `kubectl` since they haven't really be introduced to Kubernetes yet.
 
