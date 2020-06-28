@@ -20,3 +20,60 @@ We will start by pushing the initial commit to GitHub, complete with the start a
 We can then navigate to GitHub and view the solution tags. This is handy when you get stuck during a lab and need a little help.
 
 == Add an endpoint to your application
+
+. Add an @RestController annotation to the class _io.pivotal.CloudNativeSpringApplication_ (/cloud-native-spring/src/main/java/io/pivotal/CloudNativeSpringApplication.java).
++
+[source, java, numbered]
+---------------------------------------------------------------------
+package io.pivotal;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@RestController
+public class CloudNativeSpringApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CloudNativeSpringApplication.class, args);
+    }
+}
+---------------------------------------------------------------------
+
+. Add the following request handler to the class _io.pivotal.CloudNativeSpringApplication (/cloud-native-spring/src/main/java/io/pivotal/CloudNativeSpringApplication.java).
++
+[source,java]
+---------------------------------------------------------------------
+@RequestMapping("/")
+public String hello() {
+    return "Hello World!";
+}
+---------------------------------------------------------------------
++
+Completed:
++
+[source,java]
+---------------------------------------------------------------------
+package io.pivotal;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@SpringBootApplication
+@RestController
+public class CloudNativeSpringApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CloudNativeSpringApplication.class, args);
+    }
+
+    @RequestMapping("/")
+    public String hello() {
+        return "Hello World!";
+    }
+}
+---------------------------------------------------------------------
+
