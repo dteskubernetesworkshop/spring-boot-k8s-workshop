@@ -10,3 +10,7 @@ After completing the lab, you will be able to:
 The pages codebase contains a local Git repository with the starting points and the solutions for all the labs in this unit. Download the linked zip file and extract the codebase in the ~/workspace directory. The extracted directory will contains a single text file as well as the (hidden) Git files. You will be building up the code in this directory bit by bit, and we have provided reference implementations at each stage identified by tags in the Git repository. Take some time to navigate through the tags and branches using the following command: 
    
    git log --graph --decorate --oneline --all
+   
+Create a repository called pages in your GitHub account. Add this repository as a remote called origin of your local repository. You will push all of your work to this repository during the next few labs.
+
+We will start by pushing the initial commit to GitHub, complete with the start and solutions tags.   
