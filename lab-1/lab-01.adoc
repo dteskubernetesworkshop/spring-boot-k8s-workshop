@@ -1,7 +1,8 @@
 = Building a Spring Boot Application
 
 == Learning Outcomes
- After completing the lab, you will be able to:
+
+   After completing the lab, you will be able to:
 
  . Describe how to create runnable Spring Boot application
  . Describe how to create a controller that responds to HTTP requests
