@@ -46,14 +46,11 @@ public class HomeController {
 }
 ---------------------------------------------------------------------
 
-. Add the following request handler to the class _io.pivotal.CloudNativeSpringApplication (/cloud-native-spring/src/main/java/io/pivotal/CloudNativeSpringApplication.java).
-+
+. 2. Add the following line in build.gradle
+
 [source,java]
 ---------------------------------------------------------------------
-@RequestMapping("/")
-public String hello() {
-    return "Hello World!";
-}
+'org.springframework.boot:spring-boot-starter-actuator'
 ---------------------------------------------------------------------
 +
 Completed:
