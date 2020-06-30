@@ -1,2 +1,3 @@
-# spring-boot-k8s-workshop
-Spring boot Kubernetes Workshop
+= Building a Spring Boot Application
+
+== Learning Outcomes
