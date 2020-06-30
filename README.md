@@ -1,3 +1,4 @@
-= Building a Spring Boot Application
+# Welcome to the Kubernetes Workshop
+## Get a hands on experience of developing and deploying Spring boot microservice application on a Kubernetes cluster
 
-== Learning Outcomes
+### This is a 3 days hands-on workshop  enabling the Java developers to build and deploy a Spring Boot Microservice application on Kubernetes cluster following the best practices and architectural patterns for running containerized workloads on Kubernetes. This workshop will be a combination of well-designed lectures and hands-on labs assisted by technology experts. The objective of the workshop is to enable participants learn these technologies by “doing it” rather than “talking about it”.
