@@ -1,7 +1,7 @@
-Installing Docker Desktop
+Installation Prerequisites
 =========================
 
-We're going to install Docker Desktop, and turn on Kubernetes mode.
+You will find most of the tools preinstalled on your VM. If you find anything missing or you want to set it up on your own PC this guide will help you to do that.
 
 
 Install Docker Desktop for your OS
