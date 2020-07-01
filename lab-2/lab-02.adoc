@@ -13,7 +13,7 @@ Before starting the lab, pull in the docker-start task.
    git cherry-pick docker-start
    
 
-== Craft the docker file
+== Craft the docker file 
 
 . Create a new file named Dockerfile under the root of your project
 +
@@ -103,5 +103,106 @@ Once the application is started, you should be able to access it at http://local
 
 The container runs in the foreground, and pressing CTRL + C will stop it. You can run the  container in the background using -d option.
 
+. Pushing the docker image to docker hub
++
+Now let’s push the docker image to docker hub so that it is accessible from any environment or to other users even.
 
 
+[source,java]
+---------------------------------------------------------------------
+docker run -p 3000:8080 boot-pages
+---------------------------------------------------------------------
+== Pushing the docker image to docker hub
+
+=== Login with your Docker Id
+
++
+
+[source,java]
+---------------------------------------------------------------------
+$ docker login
+Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
+Username:
+Password:
+Login Succeeded
+---------------------------------------------------------------------
+
+=== Tag the image
+
+To push a local image to docker registry, you need to associate the local image with a repository on the docker registry. The notation for the repository on docker registry is username/repository:tag.
+
+To tag an image, we use the following docker tag command
+
++
+
+[source,java]
+---------------------------------------------------------------------
+$ $ docker tag image username/repository:tag
+---------------------------------------------------------------------
+
+For example, Here is how we can tag the local image of our spring boot application 
+
++
+
+[source,java]
+---------------------------------------------------------------------
+$ docker tag boot-pages username/boot-pages:0.0.1-SNAPSHOT
+
+---------------------------------------------------------------------
+Make sure to replace username with your docker id in the above command.
+
+
+Once the tagging is done, you can type docker image ls in the terminal to see the newly tagged image
++
+
+[source,java]
+---------------------------------------------------------------------
+$ docker image ls
+---------------------------------------------------------------------
+
+== Push the image to docker hub
+
+Finally, use the docker push command to push the tagged image to docker hub
+
++
+
+[source,java]
+---------------------------------------------------------------------
+$ docker push username/boot-pages:0.0.1-SNAPSHOT
+---------------------------------------------------------------------
+Again don't forget to replace the  username with your docker id in the above command.
+
+== Pulling the image from docker hub and running it 
+
+After we publish the image to docker hub, anyone can pull this image and run it in their environment. Type the following command to pull and run the image on your machine that we just pushed to docker hub
+
++
+
+[source,java]
+---------------------------------------------------------------------
+$ docker run -p 3000:8080 username/boot-pages:0.0.1-SNAPSHOT
+---------------------------------------------------------------------
+
+== Debugging a failed container
+
+Did your container failed to start up correctly ?  Let's look for clues to what happened.
+
+. Run `docker container list --all`.  This will show both running and stopped containers.
+. Note the `CONTAINER ID` and/or the `NAMES` of the failed container.  We'll need it next.
+. Run `docker container logs ...`, replacing `...` with the first few characters of the `CONTAINER ID` or the `NAMES` you found above.  This shows the console output from the failed container.  Did this give you clues on how to fix it?
+
+
+=== Stop and remove the stopped container using commands  below, then rebuild the image and rerun the container using the steps mentioned previously.
+
+.  Run `docker container list` to see running containers.  Note the `CONTAINER ID` and/or the `NAMES` of the running container.
+.  Run `docker container stop ...` replacing `...` with the first few characters of the `CONTAINER ID` or the `NAMES` you found above.  This stops the container.
+.  Run `docker container list` and note the container is now stopped.
+.  Run `docker container rm ...` replacing `...` with the first few characters of the `CONTAINER ID` or the `NAMES` you found above.  This removes the container.
+
+The read-write layer for this container is now gone.
+
+. Run `docker image list`.  The image is still there, only the container we created by running the image is gone.
+
+=== Change the code, rebuild, rerun
+
+==== Go back and start from Building the docker image section
