@@ -133,16 +133,12 @@ To push a local image to docker registry, you need to associate the local image 
 
 To tag an image, we use the following docker tag command
 
-+
-
 [source,java]
 ---------------------------------------------------------------------
-$ $ docker tag image username/repository:tag
+$ docker tag image username/repository:tag
 ---------------------------------------------------------------------
 
 For example, Here is how we can tag the local image of our spring boot application 
-
-+
 
 [source,java]
 ---------------------------------------------------------------------
@@ -153,7 +149,6 @@ Make sure to replace username with your docker id in the above command.
 
 
 Once the tagging is done, you can type docker image ls in the terminal to see the newly tagged image
-+
 
 [source,java]
 ---------------------------------------------------------------------
@@ -164,8 +159,6 @@ $ docker image ls
 
 Finally, use the docker push command to push the tagged image to docker hub
 
-+
-
 [source,java]
 ---------------------------------------------------------------------
 $ docker push username/boot-pages:0.0.1-SNAPSHOT
@@ -175,8 +168,6 @@ Again don't forget to replace the  username with your docker id in the above com
 == Pulling the image from docker hub and running it 
 
 After we publish the image to docker hub, anyone can pull this image and run it in their environment. Type the following command to pull and run the image on your machine that we just pushed to docker hub
-
-+
 
 [source,java]
 ---------------------------------------------------------------------
