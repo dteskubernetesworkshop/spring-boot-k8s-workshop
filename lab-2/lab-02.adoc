@@ -1,0 +1,107 @@
+= Building your first container 
+
+== Learning Outcomes
+After completing the lab, you will be able to:
+
+ . Describe how to create Docker container
+ . Describe how to write a docker file
+ . Run your Spring boot application as a docker container
+ 
+== Get started 
+Before starting the lab, pull in the docker-start task.
+   
+   git cherry-pick docker-start
+   
+
+== Craft the docker file
+
+. Create a new file named Dockerfile under the root of your project
++
+. Write the following line :
++ 
+
+[source, java, numbered]
+---------------------------------------------------------------------
+FROM adoptopenjdk:11-jre-openj9
+---------------------------------------------------------------------
+This says "start with the https://hub.docker.com/r/adoptopenjdk/openjdk11-openj9 base-image and use the version 11 "
+
+. Add the following line 
++ 
+[source,java]
+---------------------------------------------------------------------
+ARG JAR_FILE=build/libs/*.jar
+---------------------------------------------------------------------
+The ARG instruction defines a variable with a default value
+
+. Next add the following line 
++  
+
+[source,java]
+---------------------------------------------------------------------
+COPY ${JAR_FILE} app.jar
+---------------------------------------------------------------------
+COPY the project JAR file into the container as "app.jar" that will be executed in the ENTRYPOINT
+
+. Add the last line
++ 
+
+[source,java]
+---------------------------------------------------------------------
+ENTRYPOINT ["java","-jar","/app.jar"]
+---------------------------------------------------------------------
+This is where you configure how the application is executed inside the container
+
+. Building the Docker Image
+
++ 
+Now that we have defined the Dockerfile, let’s build a docker image for our application.
+Before building the docker image, you need to make sure that you’ve packaged the application in the form of a jar file using 
++ 
+
+[source,java]
+---------------------------------------------------------------------
+./gradlew clean build
+---------------------------------------------------------------------
+
+. Let’s now build the docker image by typing the following command 
++
+
+[source,java]
+---------------------------------------------------------------------
+docker build -t boot-pages .
+---------------------------------------------------------------------
+This says "Build the current directory's Dockerfile into an image named as boot-pages.
+
+. After it finishes, run this to see the image it has built
++
+
+[source,java]
+---------------------------------------------------------------------
+docker image list
+---------------------------------------------------------------------
+
+. After it finishes, run this to see the image it has built
++
+
+[source,java]
+---------------------------------------------------------------------
+docker image list
+---------------------------------------------------------------------
+
+. Run the image as a container
++
+
+[source,java]
+---------------------------------------------------------------------
+docker run -p 3000:8080 boot-pages
+---------------------------------------------------------------------
+
+In the run command, we have specified that the port 8080 on the container should be mapped to the port 3000 on the Host OS.
+
+Once the application is started, you should be able to access it at http://localhost:3000.
+
+The container runs in the foreground, and pressing CTRL + C will stop it. You can run the  container in the background using -d option.
+
+
+
