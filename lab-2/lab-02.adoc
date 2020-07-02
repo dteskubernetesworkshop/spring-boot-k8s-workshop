@@ -69,9 +69,9 @@ Before building the docker image, you need to make sure that you’ve packaged t
 
 [source,java]
 ---------------------------------------------------------------------
-docker build -t boot-pages .
+docker build -t pages .
 ---------------------------------------------------------------------
-This says "Build the current directory's Dockerfile into an image named as boot-pages.
+This says "Build the current directory's Dockerfile into an image named as pages.
 
 . After it finishes, run this to see the image it has built
 +
@@ -94,12 +94,12 @@ docker image list
 
 [source,java]
 ---------------------------------------------------------------------
-docker run -p 3000:8080 boot-pages
+docker run -p 8080:8080 pages
 ---------------------------------------------------------------------
 
-In the run command, we have specified that the port 8080 on the container should be mapped to the port 3000 on the Host OS.
+In the run command, we have specified that the port 8080 on the container should be mapped to the port 8080 on the Host OS.
 
-Once the application is started, you should be able to access it at http://localhost:3000.
+Once the application is started, you should be able to access it at http://localhost:8080.
 
 The container runs in the foreground, and pressing CTRL + C will stop it. You can run the  container in the background using -d option.
 
@@ -110,7 +110,7 @@ Now let’s push the docker image to docker hub so that it is accessible from an
 
 [source,java]
 ---------------------------------------------------------------------
-docker run -p 3000:8080 boot-pages
+docker run -p 8080:8080 pages
 ---------------------------------------------------------------------
 == Pushing the docker image to docker hub
 
@@ -142,7 +142,7 @@ For example, Here is how we can tag the local image of our spring boot applicati
 
 [source,java]
 ---------------------------------------------------------------------
-$ docker tag boot-pages username/boot-pages:0.0.1-SNAPSHOT
+$ docker tag pages username/pages:0.1
 
 ---------------------------------------------------------------------
 Make sure to replace username with your docker id in the above command.
@@ -161,7 +161,7 @@ Finally, use the docker push command to push the tagged image to docker hub
 
 [source,java]
 ---------------------------------------------------------------------
-$ docker push username/boot-pages:0.0.1-SNAPSHOT
+$ docker push username/pages:0.1
 ---------------------------------------------------------------------
 Again don't forget to replace the  username with your docker id in the above command.
 
@@ -171,7 +171,7 @@ After we publish the image to docker hub, anyone can pull this image and run it 
 
 [source,java]
 ---------------------------------------------------------------------
-$ docker run -p 3000:8080 username/boot-pages:0.0.1-SNAPSHOT
+$ docker run -p 8080:8080 username/pages:0.1
 ---------------------------------------------------------------------
 
 == Debugging a failed container
