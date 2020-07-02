@@ -186,11 +186,11 @@ Step 1: Craft a deployment.yaml file
    apiVersion: apps/v1
    kind: Deployment
    metadata:
-     name: hellonode-deployment
+     name: pages-deployment
    spec:
    ```
 
-   This object will be a Deployment, found in the `apps/v1` namespace.  We're naming this deployment `hellonode-deployment`.
+   This object will be a Deployment, found in the `apps/v1` namespace.  We're naming this deployment `pages-deployment`.
 
    (If you're using an older version of Kubernetes, it may be in [`apps/v1beta2`](https://v1-8.docs.kubernetes.io/docs/concepts/workloads/controllers/deployment/#creating-a-deployment) or [`apps/v1beta1`](https://v1-7.docs.kubernetes.io/docs/concepts/workloads/controllers/deployment/#creating-a-deployment) namespace.)
 
@@ -207,10 +207,10 @@ Step 1: Craft a deployment.yaml file
    ```
      selector:
        matchLabels:
-         app: hellonode
+         app: pages
    ```
 
-   This is how Kubernetes knows which pods relate to this deployment.  It looks for pods that have metadata that includes `app: hellonode`.  The pods can have additional metadata tags, but to be part of this deployment, they must have at least this tag.
+   This is how Kubernetes knows which pods relate to this deployment.  It looks for pods that have metadata that includes `app: pages`.  The pods can have additional metadata tags, but to be part of this deployment, they must have at least this tag.
 
 7. Last piece in the `spec` section:
 
@@ -227,9 +227,9 @@ Step 1: Craft a deployment.yaml file
        apiVersion: v1
        kind: Pod
        metadata:
-         name: hellonode
+         name: pages
          labels:
-           app: hellonode
+           app: pages
            version: v0.1
        spec:
          containers:
@@ -250,7 +250,7 @@ Step 1: Craft a deployment.yaml file
 10. **Remove** this line from the template:
 
     ```
-          name: hellonode
+          name: pages
     ```
 
     We can't have two pods with the same name, so we'll let Kubernetes auto-generate pod names.
@@ -290,7 +290,7 @@ Step 2: Schedule the deployment
 4. Run this command:
 
    ```
-   kubectl describe deployment hellonode-deployment
+   kubectl describe deployment pages-deployment
    ```
 
    This command tells us a lot about the deployment.
@@ -329,10 +329,10 @@ Step 1: Craft a service.yaml file
 
    ```
    metadata:
-     name: hellonode-service
+     name: pages-service
    ```
 
-   We'll name this service `hellonode-service`, matching our theme of `hellonode-deployment` and `hellonode` pods.
+   We'll name this service `pages-service`, matching our theme of `pages-deployment` and `pages` pods.
 
 4. The 4th section is the `spec` section:
 
@@ -355,7 +355,7 @@ Step 1: Craft a service.yaml file
        app: pages
    ```
 
-   Here we define which pods will get traffic from this service.  The service will locate all pods within the cluster that have `metadata` that includes `app: hellonode`.  The pods may have other metadata, but without this metadata, they won't receive traffic.
+   Here we define which pods will get traffic from this service.  The service will locate all pods within the cluster that have `metadata` that includes `app: pages`.  The pods may have other metadata, but without this metadata, they won't receive traffic.
 
    In effect, this metadata match is the glue that connects services and pods.
 
@@ -399,31 +399,9 @@ Step 2: Schedule the service
 
    This command tells us a lot about the service including the `NodePort` that Kubernetes randomly picked.
 
-4. Open a browser to `http://localhost:NODE_PORT/`, replacing `NODE_PORT` with the `NodePort` you found in step 3.  When we ran step 3, we got port `30012` so I'll browse to `http://localhost:30012`.
+4. Open a browser to `http://localhost:NODE_PORT/`, replacing `NODE_PORT` with the `NodePort` you found in step 3.  
 
 
-What happened
--------------
-
-This is how our browser got the results:
-
-1. Browser looks to localhost:30012.
-
-2. Docker-desktop forwards 30012 to the MobyLinuxVM.
-
-3. Kubernetes forwards 30012 to `hellonode-service`'s port 8080.
-
-4. The service looks for pods matching `app: pages`, and randomly picks a pod.
-
-5. The service forwards the traffic to the chosen pod's port 8080.
-
-6. The pod forwards traffic to the container's port 8080.
-
-7. Node is listening in the container on port 8080.  It got the message, and returns the html.
-
-8. The packet walks back out the same chain.
-
-9. Our browser renders the page.
 
 
 
