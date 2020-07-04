@@ -13,8 +13,8 @@ Before starting the lab, pull in the ------------ task.
    git cherry-pick --------------
    
 
-== Build the image 
-
+Step 0: Build the image
+------------------------
 For this exercise, we're going to be using the `pages:0.0.1-SNAPSHOT
 ` image built in lab-02.
 
@@ -33,8 +33,7 @@ Step 1: Craft a pod.yaml file
 
 Each Kubernetes object has an `apiVersion`, a `kind`, a `metadata` section, and a `spec` section that holds the details.
 
-
-1. Create a new directory `deployment` under the root of your project and create a file  named `pod.yaml`
+1. Create a new file in this `start` directory named `pod.yaml`
 
 2. Write these lines:
 
@@ -43,7 +42,7 @@ Each Kubernetes object has an `apiVersion`, a `kind`, a `metadata` section, and 
    kind: Pod
    ```
 
-   This says we're using a `Pod` object, and it's found in Kubernetes's `v1` namespace.
+- This says we're using a `Pod` object, and it's found in Kubernetes's `v1` namespace.
 
 3. Write these lines:
 
@@ -52,7 +51,7 @@ Each Kubernetes object has an `apiVersion`, a `kind`, a `metadata` section, and 
      name: pages
    ```
 
-   With this, we've named the pod `pages`.
+- With this, we've named the pod `pages`.
 
 4. Add these lines to the `metadata` section:
 
@@ -62,9 +61,8 @@ Each Kubernetes object has an `apiVersion`, a `kind`, a `metadata` section, and 
        version: v0.1
    ```
 
-   We're giving Kubernetes a bit of metadata about the pod -- a list of arbitrary name-value pairs.  We could put anything we wanted here -- service tags, environment name, your favorite color.
-   
-   We'll use these when we discuss service's selectors.
+- We're giving Kubernetes a bit of metadata about the pod -- a list of arbitrary name-value pairs.  We could put anything we wanted here -- service tags, environment name, your favorite color.
+We'll use these when we discuss service's selectors.
 
    
 5. The next section is the details about the pod -- the container(s) in it:
@@ -80,15 +78,16 @@ Each Kubernetes object has an `apiVersion`, a `kind`, a `metadata` section, and 
      - name: pages
    ```
 
-   The first `-` creates a new entry in the containers array.  We then name the container `pages`.
+- The first `-` creates a new entry in the containers array.  We then name the container `pages`.
 
 7. Let's add the image Kubernetes should pull from docker hub:
 
    ```
        image: username/pages:0.1
    ```
-   Replace the user name with your Docker user name
-   Good thing we built this image previously.  Kubernetes won't need to pull it because it already exists.
+
+- Replace the user name with your Docker user name
+Good thing we built this image previously.  Kubernetes won't need to pull it because it already exists.
 
 8. Add the port details:
 
@@ -120,7 +119,7 @@ Step 2: Schedule the pod
    kubectl apply -f pod.yaml
    ```
 
-   This says "please schedule the thing I've got in the yaml file `pod.yaml`.
+- This says "please schedule the thing I've got in the yaml file `pod.yaml`.
 
 2. Run this command:
 
@@ -128,7 +127,7 @@ Step 2: Schedule the pod
    kubectl get pods
    ```
 
-   Do you see your pod?  Is it running?
+- Do you see your pod?  Is it running?
 
 3. Run this command:
 
@@ -136,7 +135,7 @@ Step 2: Schedule the pod
    kubectl describe pods pages
    ```
 
-   This command tells us a lot about the pod.
+- This command tells us a lot about the pod.
 
 4. Run this command:
 
@@ -144,7 +143,7 @@ Step 2: Schedule the pod
    kubectl port-forward pages 8080:8080
    ```
 
-   This command won't end.  It sets up a proxy so you can browse to the pod.  This is generally not a good idea, but we're experimenting.
+- This command won't end.  It sets up a proxy so you can browse to the pod.  This is generally not a good idea, but we're experimenting.
 
 5. Open a browser to [http://localhost:8080/].  Do you see the site?
 
@@ -156,7 +155,7 @@ Step 2: Schedule the pod
    kubectl delete -f pod.yaml
    ```
 
-   We just scheduled Kubernetes to delete this pod.  It'll terminate the container running in it.
+We just scheduled Kubernetes to delete this pod.  It'll terminate the container running in it.
 
 8. If you hurry, you can see the pod terminating:
 
@@ -190,7 +189,7 @@ Step 1: Craft a deployment.yaml file
    spec:
    ```
 
-   This object will be a Deployment, found in the `apps/v1` namespace.  We're naming this deployment `pages-deployment`.
+- This object will be a Deployment, found in the `apps/v1` namespace.  We're naming this deployment `pages-deployment`.
 
    (If you're using an older version of Kubernetes, it may be in [`apps/v1beta2`](https://v1-8.docs.kubernetes.io/docs/concepts/workloads/controllers/deployment/#creating-a-deployment) or [`apps/v1beta1`](https://v1-7.docs.kubernetes.io/docs/concepts/workloads/controllers/deployment/#creating-a-deployment) namespace.)
 
@@ -200,7 +199,7 @@ Step 1: Craft a deployment.yaml file
      replicas: 2
    ```
 
-   This says we'd like 2 pods running.  If Kubernetes notices a pod has failed, it'll kill off that pod and spin up a new one.
+- This says we'd like 2 pods running.  If Kubernetes notices a pod has failed, it'll kill off that pod and spin up a new one.
 
 6. Still in the `spec` section, add these lines:
 
@@ -210,7 +209,7 @@ Step 1: Craft a deployment.yaml file
          app: pages
    ```
 
-   This is how Kubernetes knows which pods relate to this deployment.  It looks for pods that have metadata that includes `app: pages`.  The pods can have additional metadata tags, but to be part of this deployment, they must have at least this tag.
+- This is how Kubernetes knows which pods relate to this deployment.  It looks for pods that have metadata that includes `app: pages`.  The pods can have additional metadata tags, but to be part of this deployment, they must have at least this tag.
 
 7. Last piece in the `spec` section:
 
@@ -218,7 +217,7 @@ Step 1: Craft a deployment.yaml file
      template:
    ```
 
-   We're about to tell Kubernetes how to build each pod.
+- We're about to tell Kubernetes how to build each pod.
 
 8. Indent the original `pod.yaml` content by 4 spaces so it's nested in the template like so:
 
@@ -236,7 +235,7 @@ Step 1: Craft a deployment.yaml file
          - ...
    ```
 
-   We've defined what the pod would look like, but there's some things that don't fit here.  The deployment file is **not valid** yet.
+ - We've defined what the pod would look like, but there's some things that don't fit here.  The deployment file is **not valid** yet.
 
 9. **Remove** these lines from the template:
 
@@ -245,7 +244,7 @@ Step 1: Craft a deployment.yaml file
        kind: Pod
    ```
 
-   Deployments can only create pods, so we remove this redundancy.
+- Deployments can only create pods, so we remove this redundancy.
 
 10. **Remove** this line from the template:
 
@@ -253,7 +252,7 @@ Step 1: Craft a deployment.yaml file
           name: pages
     ```
 
-    We can't have two pods with the same name, so we'll let Kubernetes auto-generate pod names.
+- We can't have two pods with the same name, so we'll let Kubernetes auto-generate pod names.
 
 11. Save the deployment.yaml file.
 
@@ -267,7 +266,7 @@ Step 2: Schedule the deployment
    kubectl apply -f deployment.yaml
    ```
 
-   This says "please schedule the thing I've got in the yaml file `deployment.yaml`.
+- This says "please schedule the thing I've got in the yaml file `deployment.yaml`.
 
 2. Run this command:
 
@@ -275,7 +274,7 @@ Step 2: Schedule the deployment
    kubectl get deployments
    ```
 
-   Do you see your deployment?
+- Do you see your deployment?
 
 3. Run this command:
 
@@ -283,9 +282,8 @@ Step 2: Schedule the deployment
    kubectl get pods
    ```
 
-   Do you see the pods spinning up?
+- Do you see the pods spinning up?
 
-   Good thing we built the image on Kubernetes so it doesn't need to pull this image from Docker hub.
 
 4. Run this command:
 
@@ -293,7 +291,7 @@ Step 2: Schedule the deployment
    kubectl describe deployment pages-deployment
    ```
 
-   This command tells us a lot about the deployment.
+- This command tells us a lot about the deployment.
 
 4. Run this command:
 
@@ -301,7 +299,7 @@ Step 2: Schedule the deployment
    kubectl get all
    ```
 
-   This shows **most** of the things running in Kubernetes in the default namespace.  Here it shows both the deployment and the pods.
+- This shows **most** of the things running in Kubernetes in the default namespace.  Here it shows both the deployment and the pods.
 
 5. Let's leave the deployment running, and next build a service to NAT traffic into the pods.
 
@@ -323,7 +321,7 @@ Step 1: Craft a service.yaml file
    kind: Service
    ```
 
-   This says we're using a `Service` object, and it's found in Kubernetes's `v1` namespace.
+- This says we're using a `Service` object, and it's found in Kubernetes's `v1` namespace.
 
 3. Next, we'll define the `metadata` section:
 
@@ -332,7 +330,7 @@ Step 1: Craft a service.yaml file
      name: pages-service
    ```
 
-   We'll name this service `pages-service`, matching our theme of `pages-deployment` and `pages` pods.
+- We'll name this service `pages-service`, matching our theme of `pages-deployment` and `pages` pods.
 
 4. The 4th section is the `spec` section:
 
@@ -346,7 +344,7 @@ Step 1: Craft a service.yaml file
      type: NodePort
    ```
 
-   A `NodePort` service creates an inbound port on each node in the cluster.  Kubernetes randomly picks a port in the 30,000 range.  
+- A `NodePort` service creates an inbound port on each node in the cluster.  Kubernetes randomly picks a port in the 30,000 range.  
 
 6. Add these lines:
 
@@ -355,7 +353,7 @@ Step 1: Craft a service.yaml file
        app: pages
    ```
 
-   Here we define which pods will get traffic from this service.  The service will locate all pods within the cluster that have `metadata` that includes `app: pages`.  The pods may have other metadata, but without this metadata, they won't receive traffic.
+- Here we define which pods will get traffic from this service.  The service will locate all pods within the cluster that have `metadata` that includes `app: pages`.  The pods may have other metadata, but without this metadata, they won't receive traffic.
 
    In effect, this metadata match is the glue that connects services and pods.
 
@@ -367,7 +365,7 @@ Step 1: Craft a service.yaml file
        targetPort: 8080
    ```
 
-   This tells us that the port Kubernetes assigns to this `NodePort` will get routed to the service's port (`8080`, though we'll not use it this way), which will in turn get routed to the matching pods' port `8080`.
+- This tells us that the port Kubernetes assigns to this `NodePort` will get routed to the service's port (`8080`, though we'll not use it this way), which will in turn get routed to the matching pods' port `8080`.
 
 8. With that, we're done with the service.  Save the service.yaml file.
 
@@ -381,7 +379,7 @@ Step 2: Schedule the service
    kubectl apply -f service.yaml
    ```
 
-   This says "please schedule the thing I've got in the yaml file `service.yaml`.
+- This says "please schedule the thing I've got in the yaml file `service.yaml`.
 
 2. Run this command:
 
@@ -389,7 +387,7 @@ Step 2: Schedule the service
    kubectl get services
    ```
 
-   Do you see the service?
+Do you see the service?
 
 3. Run this command:
 
@@ -397,7 +395,7 @@ Step 2: Schedule the service
    kubectl describe service pages-service
    ```
 
-   This command tells us a lot about the service including the `NodePort` that Kubernetes randomly picked.
+- This command tells us a lot about the service including the `NodePort` that Kubernetes randomly picked.
 
 4. Open a browser to `http://localhost:NODE_PORT/`, replacing `NODE_PORT` with the `NodePort` you found in step 3.  
 
@@ -417,7 +415,7 @@ Let's get the console logs from Kubernetes.
    kubectl get all
    ```
 
-   Locate the two pods
+- Locate the two pods
 
 2. Run this command
 
@@ -425,7 +423,7 @@ Let's get the console logs from Kubernetes.
    kubectl logs pod/pages-deployment-...
    ```
 
-   substituting `...` for the first pod name above.
+- substituting `...` for the first pod name above.
 
 3. Run the same command for the other pod.
 
