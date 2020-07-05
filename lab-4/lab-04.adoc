@@ -1,61 +1,25 @@
-= Building a Spring Boot Application
+= Externalize Configuration in Kubernetes
 
 == Learning Outcomes
 After completing the lab, you will be able to:
 
- . Describe how to create runnable Spring Boot application
- . Describe how to create a controller that responds to HTTP requests
- . Use gradle to run gradle tasks
+ . Use environment variables to configure an application running locally
+ . Describe how to configure a Spring Boot application on Kubernetes with ConfigMap
+
  
-The pages codebase contains a local Git repository with the starting points and the solutions for all the labs in this unit. Download the linked zip file and extract the codebase in the ~/workspace directory. The extracted directory will contains a single text file as well as the (hidden) Git files. You will be building up the code in this directory bit by bit, and we have provided reference implementations at each stage identified by tags in the Git repository. Take some time to navigate through the tags and branches using the following command: 
+Before starting the lab, pull in the config-start task.
    
-   git log --graph --decorate --oneline --all
+   git cherry-pick config-start
    
-Create a repository called pages in your GitHub account. Add this repository as a remote called origin of your local repository. You will push all of your work to this repository during the next few labs.
+== Externalize the welcome message
 
-We will start by pushing the initial commit to GitHub, complete with the start and solutions tags.
-
-  git push origin master --tags
-  
-We can then navigate to GitHub and view the solution tags. This is handy when you get stuck during a lab and need a little help.
-== Open the project in Intellij IDE
-
-.   Create a settings.gradle file in the root project directory with below content
+.   Verify the HomeControllerTest.java file to check the change in test. The HomeController.java needs 
+    to be changed to pass the test case
+.   In HomeController.java create a String variable pageContent and intialize it through constructor
+    using @Value annotation. Use the same variable in getPage() method to return welcome message.
 
 +
 [source,java]
----------------------------------------------------------------------
-rootProject.name = 'pages'
----------------------------------------------------------------------
-== Add an endpoint to your application
-
-. We need to create PageApplication.java and HelloController.java based on test classes
-. Create a package org.dell.kube.pages under src/main/java
-. Create class PageApplication.java in the package with below content
-
- 
-+
-[source, java, numbered]
----------------------------------------------------------------------
-ppackage org.dell.kube.pages;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-
-@SpringBootApplication
-public class PageApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(PageApplication.class, args);
-	}
-}
----------------------------------------------------------------------
-
-. Create HomeController.java with below content in same package
-
-+
-[source, java, numbered]
 ---------------------------------------------------------------------
 package org.dell.kube.pages;
 
@@ -68,21 +32,53 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 public class HomeController {
 
+    private String pageContent;
 
+    public HomeController(@Value("${page.content}") String pageContent){
+        this.pageContent=pageContent;
+
+    }
     @GetMapping
     public String getPage(){
-        return "Hello from page : YellowPages";
+        return "Hello from page : "+pageContent+" ";
     }
 
 
 }
 ---------------------------------------------------------------------
 
-. Add actuator dependency to the list of dependencies in build.gradle inside the dependencies closure
+.   Initialize the variable PAGE_CONTENT in build.gradle for bootRun and test closures by adding below 
+    statements
+
+
++
+[source, java, numbered]
+---------------------------------------------------------------------
+bootRun.environment([
+		"PAGE_CONTENT": "YellowPages",
+])
+
+test.environment([
+		"PAGE_CONTENT": "YellowPages",
+])
+---------------------------------------------------------------------
+
+This would supply the value for pageContent during test and bootRun gradle tasks.
+
+. Build and Test the application 
+
++
+[source, java, numbered]
+---------------------------------------------------------------------
+./gradlew clean build
+./gradlew bootRun
+---------------------------------------------------------------------
+
+. Build your container
 + 
 [source,java]
 ---------------------------------------------------------------------
-implementation 'org.springframework.boot:spring-boot-starter-actuator'
+docker build -t <docker_username>/<docker_repo>:config .
 ---------------------------------------------------------------------
 
 . Add the following in both test and src application.properties
