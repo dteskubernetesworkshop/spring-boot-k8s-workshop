@@ -81,32 +81,14 @@ This would supply the value for pageContent during test and bootRun gradle tasks
 docker build -t <docker_username>/<docker_repo>:config .
 ---------------------------------------------------------------------
 
-. Add the following in both test and src application.properties
-. Add the below content in both the properties files
+. Run your container
 +  
 
 [source,java]
 ---------------------------------------------------------------------
-spring.application.name=pages
-management.endpoints.web.exposure.include=*
-management.endpoint.health.show-details=always
+docker run -p 8080:8080 -t <docker_username>/<docker_repo>:config
 ---------------------------------------------------------------------
 
-. Build & test the application
-+ 
-
-[source,java]
----------------------------------------------------------------------
-./gradlew clean build
----------------------------------------------------------------------
-
-. Run the application
-+ 
-
-[source,java]
----------------------------------------------------------------------
-./gradlew bootRun
----------------------------------------------------------------------
 
 . Browse to 
 +
