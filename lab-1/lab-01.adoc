@@ -18,10 +18,42 @@ We will start by pushing the initial commit to GitHub, complete with the start a
   git push origin master --tags
   
 We can then navigate to GitHub and view the solution tags. This is handy when you get stuck during a lab and need a little help.
+== Open the project in Intellij IDE
 
+.   Create a settings.gradle file in the root project directory with below content
+
++
+[source,java]
+---------------------------------------------------------------------
+rootProject.name = 'pages'
+---------------------------------------------------------------------
 == Add an endpoint to your application
 
-. Create a class HomeController.java under the package org.dell.kube.pages with the following content.
+. We need to create PageApplication.java and HelloController.java based on test classes
+. Create a package org.dell.kube.pages under src/main/java
+. Create class PageApplication.java in the package with below content
+
+ 
++
+[source, java, numbered]
+---------------------------------------------------------------------
+ppackage org.dell.kube.pages;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class PageApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(PageApplication.class, args);
+	}
+}
+---------------------------------------------------------------------
+
+. Create HomeController.java with below content in same package
+
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
@@ -46,23 +78,25 @@ public class HomeController {
 }
 ---------------------------------------------------------------------
 
-. Add the following line in build.gradle
+. Add actuator dependency to the list of dependencies in build.gradle inside the dependencies closure
 + 
 [source,java]
 ---------------------------------------------------------------------
-'org.springframework.boot:spring-boot-starter-actuator'
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
 ---------------------------------------------------------------------
 
 . Add the following in both test and src application.properties
+. Add the below content in both the properties files
 +  
 
 [source,java]
 ---------------------------------------------------------------------
+spring.application.name=pages
 management.endpoints.web.exposure.include=*
 management.endpoint.health.show-details=always
 ---------------------------------------------------------------------
 
-. Build the application
+. Build & test the application
 + 
 
 [source,java]
