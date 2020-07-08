@@ -8,18 +8,18 @@ After completing the lab, you will be able to:
  . Run your Spring boot application as a docker container
  
 == Get started 
-Before starting the lab, pull in the docker-start task.
+Before starting the lab, pull in the kubernetes-start task.
    
-   git cherry-pick docker-start
+   git cherry-pick kubernetes-start
    
 
 ## Step 0: Build the image
 
 
-For this exercise, we're going to be using the `pages:0.0.1-SNAPSHOT
+For this exercise, we're going to be using the `pages:0.1
 ` image built in lab-02.
 
-Run `docker image list` and ensure `boot-pages:0.0.1-SNAPSHOT
+Run `docker image list` and ensure `boot-pages:0.1
 ` is present in the list.  If not, rebuild it.
 
 ## Step 0: Ensure Kubernetes is running
@@ -542,9 +542,6 @@ kubectl logs pod/pages-deployment-...
 ---------------------------------------------------------------------
   
 
-   ```
-   kubectl logs pod/pages-deployment-...
-   ```
 
 - substituting `...` for the first pod name above.
 
