@@ -15,105 +15,36 @@ Before starting the lab, pull in the pipeline-start task.
    
    git cherry-pick pipeline-start
   
-We can then navigate to GitHub and view the solution tags. This is handy when you get stuck during a lab and need a little help.
-== Open the project in Intellij IDE
 
-.   Create a settings.gradle file in the root project directory with below content
+As part of this cherry pick you will pipeline.yaml file under the folder ./github/workflows
 
-+
-[source,java]
----------------------------------------------------------------------
-rootProject.name = 'pages'
----------------------------------------------------------------------
-== Add an endpoint to your application
-
-. We need to create PageApplication.java and HelloController.java based on test classes
-. Create a package org.dell.kube.pages under src/main/java
-. Create class PageApplication.java in the package with below content
-
- 
-+
-[source, java, numbered]
----------------------------------------------------------------------
-ppackage org.dell.kube.pages;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-
-@SpringBootApplication
-public class PageApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(PageApplication.class, args);
-	}
-}
----------------------------------------------------------------------
-
-. Create HomeController.java with below content in same package
-
-+
-[source, java, numbered]
----------------------------------------------------------------------
-package org.dell.kube.pages;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-@RequestMapping("/")
-public class HomeController {
+This is your pipeline file which gets executed on your every git commit.
+Replace the tag-name and docker-user-name appropriately in the pipeline .
 
 
-    @GetMapping
-    public String getPage(){
-        return "Hello from page : YellowPages";
-    }
+
+Create the following secrets in your github repository. To create secrets access the settings section of your repository and select secrets.
 
 
-}
----------------------------------------------------------------------
-
-. Add actuator dependency to the list of dependencies in build.gradle inside the dependencies closure
-+ 
-[source,java]
----------------------------------------------------------------------
-implementation 'org.springframework.boot:spring-boot-starter-actuator'
----------------------------------------------------------------------
-
-. Add the following in both test and src application.properties
-. Add the below content in both the properties files
-+  
 
 [source,java]
 ---------------------------------------------------------------------
-spring.application.name=pages
-management.endpoints.web.exposure.include=*
-management.endpoint.health.show-details=always
+DOCKER_USERNAME
+DOCKER_PASSWORD
+PKS_USERNAME
+PKS_PASSWORD
+PKS_API
+PKS_CLUSTER
 ---------------------------------------------------------------------
 
-. Build & test the application
-+ 
+Push your code to git repository and wait till git actions starts the build and deploys to the  PKS cluster
 
-[source,java]
----------------------------------------------------------------------
-./gradlew clean build
----------------------------------------------------------------------
 
-. Run the application
-+ 
 
-[source,java]
----------------------------------------------------------------------
-./gradlew bootRun
----------------------------------------------------------------------
+Access your application 
 
-. Browse to 
-+
 
 [source,java]
 ---------------------------------------------------------------------
-Browse to http://localhost:8080
+Browse to 
 ---------------------------------------------------------------------
