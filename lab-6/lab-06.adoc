@@ -1,4 +1,4 @@
-= Externalize Configuration in Kubernetes
+= Persist your data to in memory databse
 
 == Learning Outcomes
 After completing the lab, you will be able to:
