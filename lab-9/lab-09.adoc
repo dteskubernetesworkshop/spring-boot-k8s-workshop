@@ -1,314 +1,859 @@
-= Persist your data in Kubernetes
+= Build a microservice application on Kubernetes
 
 == Learning Outcomes
 After completing the lab, you will be able to:
 
- . Persist your data to Mysql  database running in Kubernetes
- . Create persistent volumes for MySQL 
-. Create persistent volumes & persistent volume claim for MySQL
-. Create secret to store MySQL credentials.
+ . Build a microservice application on Kubernetes
+ . Enable service discovery to discover the services 
+
+Following instructions will help you build the distributed application from scratch.
+
+. Download the project zip file and extract it inside workspace folder
+. Create a repository in github with the name pages-distributed. Keep everything default, while creating the repository, don't change anything other than default.
+. Copy the git remote add origin command and execute it in the directory
+. Create a build.gradle file with following content
+
+
++
+[source,java]
+---------------------------------------------------------------------
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'java'
+}
+
+description("Category Component")
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+}
+---------------------------------------------------------------------
 
  
-Before starting the lab, pull in the config-start task.
-   
-   git cherry-pick persistence-start
 
-As part of the persistence-start checkout you would get two test classes for which you need to add the necessary code to make the test cases pass. 
+ . Create the gradle wrapper
+
+
+    gradle wrapper --gradle-version 6.4.1 --distribution-type all
+
+. Create a .gitignore file with following content   
+
+
++
+[source,java]
+---------------------------------------------------------------------
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+---------------------------------------------------------------------
+
+. Open the project in Intellij Idea, select the import gradle project option in low right corner and set project SDK to JDK 11
+
+. Create four modules under the root project namely
+.. components/business
+.. components/category
+.. application/business-server
+.. application/category-server
+
+. This will make it a multi-project gradle. To do this Right Click on the root project ---> New ---> Module ---> Select Module as Gradle and Library as Java ---> Enter the module name as mention above It would also create the default build.gradle file in each module, which we would change later.
+
+. Create a settings.gradle file in the project directory with the following  content to it.
+
++
+[source,java]
+---------------------------------------------------------------------
+rootProject.name = 'pages-distributed'
+include 'components:business'
+include 'components:category'
+include 'application:business-server'
+include 'application:category-server'
+---------------------------------------------------------------------
+
+. Create src/main/java and src/main/resources folder under all the modules. Ensure that both these folders are marked as Sources Root and Resources Root respectively in all the four modules.
+
+. Create a server.gradle file under application
+
+
+. pull in the distributed-start task.
+   
+   git cherry-pick distributed-start
+
+As part of the distributed-start checkout you would get two test classes for which you need to add the necessary code to make the test cases pass. 
    
 == Follow the below instructions to reach to the solution.
 
-.   Here we will use JDBC for data persistence. Add jpa and mysql connector dependencies in build.gradle. It will fetch the Spring JDBC library.
+.   In the module component/category replace the content of build.gradle with the following content
  
 
 +
 [source,java]
 ---------------------------------------------------------------------
-implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-implementation 'mysql:mysql-connector-java:8.0.12'
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'java'
+}
+
+description("Category Component")
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+}
 ---------------------------------------------------------------------
 
-.   Add the following line in test.environment closure of build.gradle
+.   Create Category.java in org.dell.edu.kube.category.data package
 
 
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
-test.environment([
-		"PAGE_CONTENT": "YellowPages",
-		"SPRING_DATASOURCE_URL": "jdbc:mysql://localhost:3306/pages?createDatabaseIfNotExist=true&useSSL=false&user=root",
-])
----------------------------------------------------------------------
+package org.dell.edu.kube.category.data;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-. Remove the exclude closure for the spring-boot-starter-test testImplementaion dependency in build.gradle
+import javax.persistence.*;
+import java.util.*;
 
-+
-[source, java, numbered]
----------------------------------------------------------------------
-testImplementation('org.springframework.boot:spring-boot-starter-test') /*{
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-	}*/
----------------------------------------------------------------------
+@Entity
+@Table(name = "category")
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Category  {
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private Long id;
 
-. Add jdbc related properties in application.properties for both main and test folders
+    private String name;
+    private String type;
+    private String description;
 
-+ 
-[source,java]
----------------------------------------------------------------------
-spring.datasource.url=jdbc:mysql://localhost:3306/pages?createDatabaseIfNotExist=true&useSSL=false
-spring.datasource.username=root
-spring.datasource.password=
----------------------------------------------------------------------
-
-. Add new class MySqlPageRepository.java which implements IPageRepository.
-
-+ 
-[source,java]
----------------------------------------------------------------------
-package org.dell.kube.pages;
-
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Repository;
-
-import javax.sql.DataSource;
-import java.sql.PreparedStatement;
-import java.util.List;
-
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
-
-
-public class MySqlPageRepository implements IPageRepository {
-    private final JdbcTemplate jdbcTemplate;
-    public MySqlPageRepository(DataSource dataSource)
-    {
-        this.jdbcTemplate=new JdbcTemplate(dataSource);
-        this.init();
+    public Long getId() {
+        return id;
     }
-    @Override
-    public Page create(Page page) {
-        KeyHolder generatedKeyHolder = new GeneratedKeyHolder();
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO pages (business_name, address, category_id, contact_number) " +
-                            "VALUES (?, ?, ?, ?)",
-                    RETURN_GENERATED_KEYS
-            );
-            statement.setString(1, page.getBusinessName());
-            statement.setString(2, page.getAddress());
-            statement.setLong(3,page.getCategoryId());
-            statement.setString(4,page.getContactNumber());
-
-            return statement;
-        }, generatedKeyHolder);
-
-        return read(generatedKeyHolder.getKey().longValue());
-
+    public void setId(Long id) {
+        this.id = id;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+
     @Override
-    public Page read(long id) {
-        return jdbcTemplate.query(
-                "SELECT id, business_name, address, category_id, contact_number FROM pages WHERE id = ?",
-                new Object[]{id},
-                extractor);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Category category = (Category) o;
+        return Objects.equals(id, category.id) &&
+                Objects.equals(name, category.name) &&
+                Objects.equals(type, category.type) &&
+                Objects.equals(description, category.description) ;
     }
 
     @Override
-    public List<Page> list() {
-        return jdbcTemplate.query("SELECT id, business_name, address, category_id, contact_number FROM pages", mapper);
+    public int hashCode() {
+        return Objects.hash(id, name, type, description);
     }
 
     @Override
-    public Page update(Page page, long id) {
-        jdbcTemplate.update("UPDATE pages " +
-                        "SET business_name = ?, address = ?, category_id = ?,  contact_number = ? " +
-                        "WHERE id = ?",
-                page.getBusinessName(),
-                page.getAddress(),
-                page.getCategoryId(),
-                page.getContactNumber(),
-                id);
-
-        return read(id);
-    }
-
-    @Override
-    public void delete(long id) {
-        jdbcTemplate.update("DELETE FROM pages WHERE id = ?", id);
-    }
-
-    private final RowMapper<Page> mapper = (rs, rowNum) -> new Page(
-            rs.getLong("id"),
-            rs.getString("business_name"),
-            rs.getString("address"),
-            rs.getLong("category_id"),
-            rs.getString("contact_number")
-    );
-    private final ResultSetExtractor<Page> extractor =
-            (rs) -> rs.next() ? mapper.mapRow(rs, 1) : null;
-
-    private void init(){
-        jdbcTemplate.execute("create table if not exists pages(\n" +
-                "  id bigint(20) not null auto_increment,\n" +
-                "  business_name VARCHAR(50),\n" +
-                "  address VARCHAR(50),\n" +
-                "  category_id bigint(20),\n" +
-                "  contact_number VARCHAR(50),\n" +
-                "\n" +
-                "  primary key (id)\n" +
-                ")\n" +
-                "engine = innodb\n" +
-                "default charset = utf8;");
+    public String toString() {
+        return "Category{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                ", description='" + description +
+                '}';
     }
 }
 ---------------------------------------------------------------------
 
 
-. Make change in PageApplication class to return MySqlPageRepository instance instead of InMemoryPageRepository instance. This method would also take a DataSource instance as argument.
+. Create CategoryRepository.java interface in org.dell.edu.kube.category.data package
+
++
+[source, java, numbered]
+---------------------------------------------------------------------
+package org.dell.edu.kube.category.data;
+
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+public interface CategoryRepository extends CrudRepository<Category,Long> {
+
+    @Query("select c from Category c where c.type = ?1")
+    List<Category> findByType(String type);
+}
+---------------------------------------------------------------------
+
+. Create a RestController in the name CategoryController.java in org.dell.edu.kube.category package
++ 
+[source,java]
+---------------------------------------------------------------------
+package org.dell.edu.kube.category;
+
+import org.dell.edu.kube.category.data.Category;
+import org.dell.edu.kube.category.data.CategoryRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/category")
+public class CategoryController {
+    Logger logger = LoggerFactory.getLogger(CategoryController.class);
+    @Autowired
+    CategoryRepository repository;
+
+    @PostMapping
+    public ResponseEntity add(@RequestBody Category category){
+        repository.save(category);
+        logger.debug("Category created "+category);
+        return new ResponseEntity(category, HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity getAll(){
+        return new ResponseEntity(repository.findAll(),HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity find(@PathVariable Long id){
+        Optional<Category> category = repository.findById(id);
+        if(category.isPresent()){
+            return new ResponseEntity(category.get(),HttpStatus.OK);
+        }else {
+            return new ResponseEntity("No Category Available",HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("type/{type}")
+    public ResponseEntity findByType(@PathVariable String type){
+        List<Category> category = repository.findByType(type);
+        if(category != null && !category.isEmpty()){
+            return new ResponseEntity(category,HttpStatus.OK);
+        }else{
+            return new ResponseEntity("No Business Category available for the type",HttpStatus.NOT_FOUND);
+        }
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity update(@PathVariable Long id,@RequestBody Category category){
+        if(repository.existsById(id)){
+            category.setId(id);
+            repository.save(category);
+            return new ResponseEntity(category,HttpStatus.OK);
+        }else {
+            return new ResponseEntity("Category Not Available",HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public String delete(@PathVariable Long id){
+        repository.deleteById(id);
+        return "Category Deleted";
+    }
+}
+---------------------------------------------------------------------
+
+.   In the module component/business replace the content of build.gradle with the following content
+ 
+
++ 
+[source,java]
+---------------------------------------------------------------------
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'java'
+}
+
+description("Business Component")
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":components:category")
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+}
+---------------------------------------------------------------------
+
+
+. Create Business.java in org.dell.edu.kube.business.data package.
 
 +
 
 [source,java]
 ---------------------------------------------------------------------
-@Bean
-	public IPageRepository iPageRepository(DataSource dataSource){
-		return new MySqlPageRepository(dataSource);
-	}
+package org.dell.edu.kube.business.data;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import javax.persistence.*;
+import java.util.Objects;
+
+@Entity
+@Table(name="business")
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Business  {
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private String address;
+    private String owner;
+    @Column(name = "category_id")
+    private Long  category;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public Long getCategory() {
+        return category;
+    }
+
+    public void setCategory(Long category) {
+        this.category = category;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Business business = (Business) o;
+        return Objects.equals(id, business.id) &&
+                Objects.equals(name, business.name) &&
+                Objects.equals(address, business.address) &&
+                Objects.equals(owner, business.owner) &&
+                Objects.equals(category, business.category);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, address, owner, category);
+    }
+
+    @Override
+    public String toString() {
+        return "Business{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", owner='" + owner + '\'' +
+                ", category=" + category +
+                '}';
+    }
+}
 ---------------------------------------------------------------------
 
 
-. Add new deployment file mysql-pv.yaml to be used by the new mysql deployment volume in kubernetes cluster under deployment folder
+. Create BusinessVO.java in org.dell.edu.kube.business.data package.
 +
 
 [source,java]
 ---------------------------------------------------------------------
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: mysql-volume
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 2Gi
-  accessModes:
-    - ReadWriteMany
-  hostPath:
-    path: "/mnt/data"
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mysql-volume-claim
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 2Gi
+package org.dell.edu.kube.business.data;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.dell.edu.kube.category.data.Category;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class BusinessVO implements Serializable {
+    private Long id;
+
+    private String name;
+    private String address;
+    private String owner;
+    private Category category;
+    private Long categoryId;
+
+    public BusinessVO() {
+    }
+
+    public BusinessVO(Business business) {
+        this.id = business.getId();
+        this.name = business.getName();
+        this.address = business.getAddress();
+        this.owner = business.getOwner();
+        //this.category = category;
+        this.categoryId = business.getCategory();
+    }
+
+
+    @Override
+    public String toString() {
+        return "BusinessVO{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", owner='" + owner + '\'' +
+                ", category=" + category +
+                ", categoryId=" + categoryId +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BusinessVO that = (BusinessVO) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(address, that.address) &&
+                Objects.equals(owner, that.owner) &&
+                Objects.equals(category, that.category)&&
+                Objects.equals(categoryId, that.categoryId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, address, owner, category,categoryId);
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+}
 ---------------------------------------------------------------------
 
-. Create a new file called mysql-secret.yaml in deployment folder
+. Create BusinessRepository.java interface in org.dell.edu.kube.business.data package.
 +
 
 [source,java]
 ---------------------------------------------------------------------
-apiVersion: v1
-data:
-  mysql-pass: cGFzc3dvcmQ=
-kind: Secret
-metadata:
-  name: mysql-secret
+apackage org.dell.edu.kube.business.data;
+
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+public interface BusinessRepository extends CrudRepository<Business,Long> {
+    @Query("select b from Business b where b.category = ?1")
+    List<Business> findByCategory(Long category);
+
+    @Query("select b from Business b where b.owner = ?1")
+    List<Business> findByOwner(String owner);
+
+
+}
 ---------------------------------------------------------------------
 
-. Create a new file called mysql-deployment.yaml in deployment folder
+. Create a RestController BusinessController.java in org.dell.edu.kube.business package.
+
+[source,java]
+---------------------------------------------------------------------
+package org.dell.edu.kube.business;
+
+import org.dell.edu.kube.business.data.BusinessRepository;
+import org.dell.edu.kube.business.data.BusinessVO;
+import org.dell.edu.kube.business.data.Business;
+import org.dell.edu.kube.category.data.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping(path="/business")
+public class BusinessController {
+    Logger logger = LoggerFactory.getLogger(BusinessController.class);
+    @Autowired
+    BusinessRepository repository;
+    @Autowired
+    RestTemplate restTemplate;
+    @Value("${category.url:http://localhost:8082/category}")
+    private String categoryUrl;
+
+    @PostMapping
+    public ResponseEntity add( @RequestBody Business business){
+
+        repository.save(business);
+        BusinessVO vo = new BusinessVO(business);
+        if(business.getCategory() != null ){
+            Category category = getCategory(business.getCategory());
+            if(category != null){
+                vo.setCategory(category);
+            }
+        }
+        logger.debug("**************************Business Entity Created"+vo+"*****************************");
+        return new ResponseEntity(vo, HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity all(){
+        return new ResponseEntity(repository.findAll(),HttpStatus.OK);
+
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity get(@PathVariable Long id){
+        Optional<Business> business = repository.findById(id);
+        if(business.isPresent()){
+            BusinessVO vo = new BusinessVO(business.get());
+            if(vo.getCategoryId() != null){
+                vo.setCategory(getCategory(vo.getCategoryId()));
+            }
+            return new ResponseEntity(vo,HttpStatus.OK);
+        }else{
+            return new ResponseEntity("Business not available",HttpStatus.NOT_FOUND);
+        }
+
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity update(@PathVariable Long id, @RequestBody Business business){
+        if(repository.existsById(id)){
+            business.setId(id);
+            repository.save(business);
+            return  new ResponseEntity(business,HttpStatus.OK);
+        }else{
+            return new ResponseEntity("Business not available",HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity delete(@PathVariable Long id){
+        if(repository.existsById(id)){
+            repository.deleteById(id);
+        }
+        return new ResponseEntity("Deleted",HttpStatus.OK);
+
+    }
+
+    @GetMapping("category/{categoryId}")
+    public ResponseEntity getByCategory(@PathVariable Long categoryId){
+        Category category = getCategory(categoryId);
+        if(category != null){
+            List<Business> businesses = repository.findByCategory(categoryId);
+            return new ResponseEntity(businesses,HttpStatus.OK);
+        }else {
+            return new ResponseEntity("Wrong or Invalid Category ID",HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("owner/{owner}")
+    public ResponseEntity getByOwner(@PathVariable String owner){
+        List<Business> business = repository.findByOwner(owner);
+        if(business != null && !business.isEmpty()){
+            return new ResponseEntity(business,HttpStatus.OK);
+        }else{
+            return new ResponseEntity("No Businesses owned by the owner",HttpStatus.NOT_FOUND);
+        }
+
+    }
+
+    private Category getCategory(Long categoryId){
+        ResponseEntity<Category> entity = null;
+        try{
+            entity =  restTemplate.getForEntity(categoryUrl+"/{id}",Category.class,categoryId);
+        }catch (Exception e){
+            logger.error("No Category Available for ID"+categoryId);
+        }
+        if(entity != null){
+            logger.debug("*************************Category Available :"+"*****************************");
+            return entity.getBody();
+        }else {
+
+            return null;
+        }
+    }
+}
+---------------------------------------------------------------------
+
+. Put the following changes in application build.gradle file
+
+
+.. Replace the server.gradle with below content
 +
 
 [source,java]
 ---------------------------------------------------------------------
-apiVersion: apps/v1 
-kind: Deployment
-metadata:
-  name: mysql
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mysql
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: mysql
-    spec:
-      containers:
-        - image: mysql:8.0
-          name: mysql
-          env:
-            # Instead of using value directly we could also use secrets
-           - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: mysql-pass
-          ports:
-            - containerPort: 3306
-              name: mysql
-          volumeMounts:
-            - name: mysql-storage
-              mountPath: "/var/lib/mysql"
-      volumes:
-        - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-volume-claim
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql
-spec:
-  ports:
-    - port: 3306
-  selector:
-    app: mysql
-  clusterIP: None
+apply plugin: "org.springframework.boot"
+apply plugin: "io.spring.dependency-management"
+apply plugin: "java"
+
+
+repositories {
+    mavenCentral()
+}
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation group: 'io.springfox', name: 'springfox-core', version: '2.7.0'
+    implementation group: 'io.swagger', name: 'swagger-annotations', version: '1.6.1'
+    implementation 'io.springfox:springfox-swagger2:2.7.0'
+    implementation  'io.springfox:springfox-swagger-ui:2.7.0'
+    runtimeOnly 'mysql:mysql-connector-java'
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
 ---------------------------------------------------------------------
 
-. Install a MySQL instance with no password for user root in local machine
+
+. Under application/category-server replace build.gradle file with the below content
+
 
 +
 
 [source,java]
 ---------------------------------------------------------------------
+apply from: "$projectDir/../server.gradle"
+
+group = 'org.dell.edu.kube'
+version = '0.0.1-SNAPSHOT'
+description("Category Server")
+
+dependencies {
+    implementation project(":components:category")
+}
 
 ---------------------------------------------------------------------
 
 
-. Build, Test and Run the application locally 
+
+. Create Application class named KubeWorkshopCategoryApplication.java in org.dell.edu.kube.category package
 +
 
 [source,java]
 ---------------------------------------------------------------------
-./gradlew clean
-./gradlew build
-./gradlew bootRun
+package org.dell.edu.kube.category;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+@EnableSwagger2
+@SpringBootApplication
+public class KubeWorkshopCategoryApplication {
+    @Bean
+    public Docket productApi() {
+        return new Docket(DocumentationType.SWAGGER_2).select()
+                .apis(RequestHandlerSelectors.basePackage("org.dell.edu.kube.category")).build();
+    }
+
+
+    public static void main(String[] args) {
+        SpringApplication.run(KubeWorkshopCategoryApplication.class, args);
+    }
+
+}
 ---------------------------------------------------------------------
 
-. Stop the application. As we have to now prepare the application to be used in kubernetes cluster replace the following values in the application.properties in src/main folder
+. Create Application class named WelcomeCategoryController.java in org.dell.edu.kube.category package
 +
 
 [source,java]
 ---------------------------------------------------------------------
-spring.datasource.url=jdbc:mysql://mysql/pages?createDatabaseIfNotExist=true&useSSL=false&user=root
-spring.datasource.password=password
+package org.dell.edu.kube.category;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/")
+public class WelcomeCategoryController {
+    Logger loger = LoggerFactory.getLogger(WelcomeCategoryController.class);
+    @Value("${welcome.message:Welcome to Kubernetes Category Application}")
+    private String message;
+    @GetMapping
+    public String index(){
+        loger.debug("Welcome to Kubernetes Category Application Message Generated");
+        loger.info("Welcome to Kubernetes Category Application Message Generated");
+        loger.trace("Welcome to Kubernetes Category Application Message Generated");
+        loger.warn("Welcome to Kubernetes Category Application Message Generated");
+        loger.error("Welcome to Kubernetes Category Application Message Generated");
+        return message;
+    }
+}
 ---------------------------------------------------------------------
 
 . Build, Test and Run the application locally 
