@@ -338,6 +338,9 @@ kubectl apply -f deployment/pages-service.yaml
 kubectl apply -f deployment/pages-deployment.yaml
 ---------------------------------------------------------------------
 
+. Finally push the code to the github so that github actions will start the pipeline and the application would be deployed in cluster
+
+
 . Access your application 
 +
 
