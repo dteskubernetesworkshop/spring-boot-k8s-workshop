@@ -473,18 +473,7 @@ apiVersion: v1
 
    In effect, this metadata match is the glue that connects services and pods.
 
-7. Add these lines, indented to match the `selector` section:
-
-+
-[source, java, numbered]
----------------------------------------------------------------------
-  ports:
-     - port: 8080
-       targetPort: 8080
----------------------------------------------------------------------
-
-
-- This tells us that the port Kubernetes assigns to this `NodePort` will get routed to the service's port (`8080`, though we'll not use it this way), which will in turn get routed to the matching pods' port `8080`.
+- This also tells us that the port Kubernetes assigns to this `NodePort` will get routed to the service's port (`8080`, though we'll not use it this way), which will in turn get routed to the matching pods' port `8080`.
 
 8. With that, we're done with the service.  Save the pages-service.yaml file.
 
