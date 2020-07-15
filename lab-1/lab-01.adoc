@@ -7,18 +7,184 @@ After completing the lab, you will be able to:
  . Describe how to create a controller that responds to HTTP requests
  . Use gradle to run gradle tasks
  
-The pages codebase contains a local Git repository with the starting points and the solutions for all the labs in this unit. Download the linked zip file and extract the codebase in the ~/workspace directory. The extracted directory will contains a single text file as well as the (hidden) Git files. You will be building up the code in this directory bit by bit, and we have provided reference implementations at each stage identified by tags in the Git repository. Take some time to navigate through the tags and branches using the following command: 
-   
+The  https://dell-edu-lab-store.s3.ap-south-1.amazonaws.com/repository/pages.zip[pages] codebase contains a local Git repository with the starting points and the solutions for all the labs in this unit. Download the linked zip file and extract the codebase in the ~/workspace directory.  The extracted directory will contain a single text file as well as the (hidden) Git files. You will be building up the code in this directory bit by bit, and we have provided reference implementations at each stage identified by tags in the Git repository. Take some time to navigate through the tags and branches using the following command: 
+
    git log --graph --decorate --oneline --all
+
    
-Create a repository called pages in your GitHub account. Add this repository as a remote called origin of your local repository. You will push all of your work to this repository during the next few labs.
+Create a repository called pages in your GitHub account. Add this repository as a remote called origin of your local repository.Keep everything default, while creating the repository, don't change anything other than default. You will push all of your work to this repository during the next few labs.
 
 We will start by pushing the initial commit to GitHub, complete with the start and solutions tags.
 
   git push origin master --tags
-  
+
+   
 We can then navigate to GitHub and view the solution tags. This is handy when you get stuck during a lab and need a little help.
-== Open the project in Intellij IDE
+
+
+. Create a build.gradle file with following content
+
++
+[source,java]
+---------------------------------------------------------------------
+plugins {
+	id 'org.springframework.boot' version '2.3.1.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+	id 'java'
+}
+
+group = 'com.example'
+sourceCompatibility = '11'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+}
+
+test {
+	useJUnitPlatform()
+}
+---------------------------------------------------------------------
+
+.   Create the gradle ecosystem by using the following commands
+
++
+[source,java]
+---------------------------------------------------------------------
+gradle wrapper --gradle-version 6.4.1 --distribution-type all
+---------------------------------------------------------------------
+
+.   Create a .gitignore file with following content
++
+[source,java]
+---------------------------------------------------------------------
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+---------------------------------------------------------------------
+
+. Open the project in Intellij Idea, select the import gradle project option in bottom right corner and set project SDK to JDK 11
+. Create two folders src/main/java and src/test/java under project root directory. Mark them as sources root and test root respectively.
+. Create two packages org.dell.kube.pages and org.dell.kube.pagesapi under src/test/java
+. Create a Test class called PagesApplicationTests.java under package org.dell.kube.pages with below content
+
++
+[source,java]
+---------------------------------------------------------------------
+package org.dell.kube.pages;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class PagesApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+---------------------------------------------------------------------  
+
+. Create a Test class called HomeControllerTests.java  under package org.dell.kube.pages with below content
+
++
+[source,java]
+---------------------------------------------------------------------
+package org.dell.kube.pages;
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class HomeControllerTest {
+    private final String message = "YellowPages";
+
+    @Test
+    public void itSaysYellowPagesHello() throws Exception {
+        HomeController controller = new HomeController();
+
+        assertThat(controller.getPage()).contains(message);
+    }
+
+
+}
+---------------------------------------------------------------------  
+
+. Create a Test class called HomeApiTest under the package org.dell.kube.pagesapi with below content
++
+[source,java]
+---------------------------------------------------------------------
+package org.dell.kube.pagesapi;
+
+import org.dell.kube.pages.PageApplication;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+
+@SpringBootTest(classes = PageApplication.class, webEnvironment = RANDOM_PORT)
+public class HomeApiTest {
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
+    @Test
+    public void readTest() {
+        String body = this.restTemplate.getForObject("/", String.class);
+        assertThat(body).contains("YellowPages");
+    }
+
+    @Test
+    public void healthTest(){
+        String body = this.restTemplate.getForObject("/actuator/health", String.class);
+        assertThat(body).contains("UP");
+    }
+}
+---------------------------------------------------------------------  
 
 .   Create a settings.gradle file in the root project directory with below content
 
@@ -27,7 +193,8 @@ We can then navigate to GitHub and view the solution tags. This is handy when yo
 ---------------------------------------------------------------------
 rootProject.name = 'pages'
 ---------------------------------------------------------------------
-== Add an endpoint to your application
+
+
 
 . We need to create PageApplication.java and HelloController.java based on test classes
 . Create a package org.dell.kube.pages under src/main/java
@@ -112,7 +279,7 @@ management.endpoint.health.show-details=always
 ./gradlew bootRun
 ---------------------------------------------------------------------
 
-. Browse to 
+. Access your application
 +
 
 [source,java]
