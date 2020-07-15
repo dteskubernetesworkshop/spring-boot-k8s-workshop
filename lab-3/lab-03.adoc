@@ -186,14 +186,14 @@ Good thing we built this image previously.  Kubernetes won't need to pull it bec
 
 5. Open a browser to [http://localhost:8080/].  Do you see the site?
 
-6. Hit `Cntrl` + `C` to break out of the port-forward command.  You can check `kubectl get pods` to see the pod is still running.
+6. Hit `Ctrl` + `C` to break out of the port-forward command.  You can check `kubectl get pods` to see the pod is still running.
 
 7. Run this from the terminal:
 
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
- kubectl delete -f pod.yaml
+ kubectl delete -f deployment/pod.yaml
 ---------------------------------------------------------------------
  
 - We just scheduled Kubernetes to delete this pod.  It'll terminate the container running in it.
@@ -215,11 +215,11 @@ Let's scale up from one pod to many pods.
 == Step 1: Craft a deployment.yaml file
 
 
-1. Copy the `pod.yaml` file, and rename it `deployment.yaml`.
+1. Copy the `pod.yaml` file, and rename it `pages-deployment.yaml`.
 
    **Pro tip:** Don't copy and paste the files, rather re-type them to get more experience with this content.
 
-2. Open `deployment.yaml` in a text editor.
+2. Open `pages-deployment.yaml` in a text editor.
 
 3. At the very top, add a bunch of blank space above `apiVersion: v1`.
 
@@ -232,7 +232,7 @@ Let's scale up from one pod to many pods.
 apiVersion: apps/v1
    kind: Deployment
    metadata:
-     name: pages-deployment
+     name: pages
    spec:
 ---------------------------------------------------------------------
 
@@ -326,7 +326,7 @@ name: pages
 
 - We can't have two pods with the same name, so we'll let Kubernetes auto-generate pod names.
 
-11. Save the deployment.yaml file.
+11. Save the pages-deployment.yaml file.
 
 
 == Step 2: Schedule the deployment
@@ -337,7 +337,7 @@ name: pages
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
-  kubectl apply -f deployment.yaml
+  kubectl apply -f deployment/pages-deployment.yaml
 ---------------------------------------------------------------------
 
    
@@ -374,7 +374,7 @@ name: pages
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
-kubectl describe deployment pages-deployment
+kubectl describe deployment pages
 ---------------------------------------------------------------------
 
 
@@ -403,7 +403,7 @@ Now that we've got a deployment running, let's route traffic into it.
 == Step 1: Craft a service.yaml file
 
 
-1. Create a new file named `service.yaml`.
+1. Create a new file named `pages-service.yaml` under the deployment folder.
 
 2. Write these lines:
 
@@ -423,7 +423,7 @@ apiVersion: v1
 [source, java, numbered]
 ---------------------------------------------------------------------
  metadata:
-     name: pages-service
+     name: pages
 ---------------------------------------------------------------------
 
 
@@ -477,7 +477,7 @@ apiVersion: v1
 
 - This tells us that the port Kubernetes assigns to this `NodePort` will get routed to the service's port (`8080`, though we'll not use it this way), which will in turn get routed to the matching pods' port `8080`.
 
-8. With that, we're done with the service.  Save the service.yaml file.
+8. With that, we're done with the service.  Save the pages-service.yaml file.
 
 
 == Step 2: Schedule the service
@@ -488,7 +488,7 @@ apiVersion: v1
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
-  kubectl apply -f service.yaml
+  kubectl apply -f deployment/pages-service.yaml
 ---------------------------------------------------------------------
 
   
@@ -512,7 +512,7 @@ Do you see the service?
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
- kubectl describe service pages-service
+ kubectl describe service pages
 ---------------------------------------------------------------------
 
 
@@ -540,7 +540,7 @@ kubectl get all
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
-kubectl logs pod/pages-deployment-...
+kubectl logs pod/pages ...
 ---------------------------------------------------------------------
   
 
