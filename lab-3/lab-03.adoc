@@ -423,7 +423,10 @@ apiVersion: v1
 [source, java, numbered]
 ---------------------------------------------------------------------
  metadata:
-     name: pages
+  labels:
+    app: pages
+    servicefor: pages
+  name: pages
 ---------------------------------------------------------------------
 
 
@@ -444,7 +447,11 @@ apiVersion: v1
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
-  type: NodePort
+  spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
 ---------------------------------------------------------------------
 
 
@@ -456,7 +463,9 @@ apiVersion: v1
 [source, java, numbered]
 ---------------------------------------------------------------------
   selector:
-       app: pages
+    app: pages
+    servicefor: pages
+  type: NodePort
 ---------------------------------------------------------------------
 
 
