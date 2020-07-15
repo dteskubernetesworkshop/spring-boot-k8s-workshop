@@ -10,7 +10,7 @@ After completing the lab, you will be able to:
 == Get started 
 Before starting the lab, pull in the kubernetes-start task.
    
-   git cherry-pick kubernetes-start
+   git cherry-pick kubernetization-start
    
 
 ## Step 0: Build the image
@@ -24,8 +24,10 @@ Run `docker image list` and ensure `boot-pages:0.1
 
 ## Step 0: Ensure Kubernetes is running
 
+Please refer to the readme file under the installation folder for instructions specific to logging into PKS .
 
-1. Run `kubectl cluster-info` and `kubectl version`.  If it errored, return to exercise 0 to ensure you're
+
+1. Run `kubectl cluster-info` and `kubectl version`.  If it errored, return to the previous step
 
 ## Step 1: Craft a pod.yaml file
 
@@ -34,7 +36,7 @@ Run `docker image list` and ensure `boot-pages:0.1
 
 Each Kubernetes object has an `apiVersion`, a `kind`, a `metadata` section, and a `spec` section that holds the details.
 
-1. Create a new file in this `start` directory named `pod.yaml`
+1. Create a new file under the `deployment` directory of your pages application named as  `pod.yaml`
 
 2. Write these lines:
 
@@ -99,7 +101,7 @@ We'll use these when we discuss service's selectors.
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
- image: username/pages:0.1
+ image: <docker_username>/<docker_repo>:<tag>
 ---------------------------------------------------------------------
 
    
@@ -124,7 +126,7 @@ Good thing we built this image previously.  Kubernetes won't need to pull it bec
    spec:
      containers:
      - name: pages
-       image: username/pages:0.1
+       image: <docker_username>/<docker_repo>:<tag>
        ports:
        - containerPort: 8080
 ---------------------------------------------------------------------
