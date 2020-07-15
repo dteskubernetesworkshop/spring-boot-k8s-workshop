@@ -168,6 +168,17 @@ After we publish the image to docker hub, anyone can pull this image and run it 
 $ docker run -p 8080:8080 docker-username/pages:0.1
 ---------------------------------------------------------------------
 
+. Commit your code to your github repository
+
++
+
+[source,java]
+---------------------------------------------------------------------
+git add .
+git commit -m "commit message"
+git push -u origin master 
+---------------------------------------------------------------------
+
 == Debugging a failed container
 
 Did your container failed to start up correctly ?  Let's look for clues to what happened.
