@@ -204,7 +204,7 @@ rootProject.name = 'pages'
 +
 [source, java, numbered]
 ---------------------------------------------------------------------
-ppackage org.dell.kube.pages;
+package org.dell.kube.pages;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -285,4 +285,23 @@ management.endpoint.health.show-details=always
 [source,java]
 ---------------------------------------------------------------------
 Browse to http://localhost:8080
+---------------------------------------------------------------------
+
+
++
+
+[source,java]
+---------------------------------------------------------------------
+Browse to http://localhost:8080
+---------------------------------------------------------------------
+
+. Commit your code to your github repository
+
++
+
+[source,java]
+---------------------------------------------------------------------
+git add .
+git commit -m "commit message"
+git push -u origin master 
 ---------------------------------------------------------------------
