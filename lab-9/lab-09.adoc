@@ -6,9 +6,11 @@ After completing the lab, you will be able to:
  . Build a microservice application on Kubernetes
  . Enable service discovery to discover the services 
 
+ 
+
 Following instructions will help you build the distributed application from scratch.
 
-. Download the project zip file and extract it inside workspace folder
+. Download the https://dell-edu-lab-store.s3.ap-south-1.amazonaws.com/repository/pages-distributed.zip[project zip] file and extract it inside workspace folder
 . Create a repository in github with the name pages-distributed. Keep everything default, while creating the repository, don't change anything other than default.
 . Copy the git remote add origin command and execute it in the directory
 . Create a build.gradle file with following content
@@ -18,27 +20,16 @@ Following instructions will help you build the distributed application from scra
 [source,java]
 ---------------------------------------------------------------------
 plugins {
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
-    id 'java'
+	id 'org.springframework.boot' version '2.3.1.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+	id 'java'
 }
 
-description("Category Component")
-bootJar {
-    enabled = false
-}
-
-jar {
-    enabled = true
-}
+group = 'com.example'
+sourceCompatibility = '11'
 
 repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	mavenCentral()
 }
 ---------------------------------------------------------------------
 
@@ -856,40 +847,642 @@ public class WelcomeCategoryController {
 }
 ---------------------------------------------------------------------
 
-. Build, Test and Run the application locally 
+
+. Add the following in the application.properties in main folder
+
++
+
+[source,java]
+---------------------------------------------------------------------
+spring.application.name=category
+server.port=8082
+management.endpoints.web.exposure.include=*
+management.endpoint.health.show-details=always
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL5Dialect
+
+#For Deployment in Kubernetes
+#spring.datasource.url=jdbc:mysql://mysql/category?createDatabaseIfNotExist=true&useSSL=false&user=root
+#MySQL Root user password in kubernetes deployment is password
+#spring.datasource.password=password
+#spring.datasource.username=root
+
+#For Testing locally
+spring.datasource.url=jdbc:mysql://localhost:3306/category?createDatabaseIfNotExist=true&useSSL=false&user=root
+#For Deployment locally provide the appropriate root user password
+#[Root User Password @Localhost MySQL Deployment]
+spring.datasource.password=
+spring.datasource.username=root
+
+logging.file.name=/var/tmp/category.log
+debug=true
+logging.level.org.springframework.web=debug
+logging.level.root=debug
+logging.level.org.hibernate=error
+welcome.message="<html><head><title>Welcome to Dell Kubernetes Category Microservices</title></head><body><center><h1>Welcome to the Dell Kubernetes Microservices Workshop<h1><br><h2>Please click <a href='/swagger-ui.html'>here </a> to access the API Documentation</h2><br><h2>Please click <a href='/actuator'>here </a> to access the actuator endpoints</h2></center></body></html>"
+---------------------------------------------------------------------
+
+Put the following Changes in application/business-server
+
+. Chnage the content of build.gradle with the below
++
+
+[source,java]
+---------------------------------------------------------------------
+apply from: "$projectDir/../server.gradle"
+
+group = 'org.edu.dell.kube'
+version = '0.0.1-SNAPSHOT'
+description("Business Server")
+
+dependencies {
+    implementation project(":components:category")
+    implementation project(":components:business")
+
+}
+---------------------------------------------------------------------
+
+. Create a package in the name org.dell.edu.kube.business
+
+. Create class KubeWorkshopBusinessApplication.java
+
+
+[source,java]
+---------------------------------------------------------------------
+package org.dell.edu.kube.business;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestTemplate;
+import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+@EnableSwagger2
+@EntityScan(basePackages="org.dell.edu.kube.business")
+@SpringBootApplication
+public class KubeWorkshopBusinessApplication {
+    @Bean
+    public Docket productApi() {
+        return new Docket(DocumentationType.SWAGGER_2).select()
+                .apis(RequestHandlerSelectors.basePackage("org.dell.edu.kube.business"))
+                .build();
+    }
+
+
+    public static void main(String[] args) {
+        SpringApplication.run(KubeWorkshopBusinessApplication.class, args);
+    }
+
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder.build();
+    }
+
+}
+---------------------------------------------------------------------
+
+. Create RestController WelcomeBusinessController.java
+
+
++
+
+[source,java]
+---------------------------------------------------------------------
+package org.dell.edu.kube.business;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/")
+public class WelcomeBusinessController {
+    Logger loger = LoggerFactory.getLogger(WelcomeBusinessController.class);
+    @Value("${welcome.message:Welcome to Kubernetes Business Application}")
+    private String message;
+    @GetMapping
+    public String index(){
+        loger.debug("Welcome to Kubernetes Business Application Message Generated");
+        loger.info("Welcome to Kubernetes Business Application Message Generated");
+        loger.warn("Welcome to Kubernetes Business Application Message Generated");
+        loger.trace("Welcome to Kubernetes Business Application Message Generated");
+        loger.error("Welcome to Kubernetes Business Application Message Generated");
+        return message;
+    }
+}
+---------------------------------------------------------------------
+
+Local Testing of the application
+
+. business-server is dependent on the category-server. We need to run category-server followed by business-server
 +
 
 [source,java]
 ---------------------------------------------------------------------
 ./gradlew clean
-./gradlew build -x test 
+./gradlew :application:category-server:build
+./gradlew :application:business-server:build
+./gradlew :application:category-server:bootRun
 ---------------------------------------------------------------------
 
-. Docker build and publish the image with tag persist
-. Make change in the pages-deployment.yaml and pipeline.yaml to update the tag
-. In the pipeline.yaml add "./gradlew clean build -x test" instead of "./gradlew clean build"
-. Change the pipeline.yaml to use the new mysql related yaml files. The last section of the pipeline file would appear as below
+. Open another terminal and run
+
 +
 
 [source,java]
 ---------------------------------------------------------------------
-kubectl apply -f deployment/log-pv.yaml
-kubectl apply -f deployment/log-pvc.yaml
-kubectl apply -f deployment/mysql-pv.yaml
-kubectl apply -f deployment/mysql-secret.yaml
-kubectl apply -f deployment/mysql-deployment.yaml
-kubectl apply -f deployment/pages-config.yaml
-kubectl apply -f deployment/pages-service.yaml
-kubectl apply -f deployment/pages-deployment.yaml
+./gradlew :application:business-server:bootRun
 ---------------------------------------------------------------------
 
-. Finally push the code to the github so that github actions will start the pipeline and the application would be deployed in cluster
+Dockerizing both the applications
 
+. In both the src/main/resources/application.properties comment the properties under For Testing locally section and uncomment the properties under For Deployment in Kubernetes section
+. Execute the below commands to build it afresh.
 
-. Access your application 
++
+
+[source,java]
+---------------------------------------------------------------------
+./gradlew clean
+./gradlew :application:category-server:build 
+./gradlew :application:business-server:build 
+---------------------------------------------------------------------
+
+. Create a directory dockerfiles under the project root.
+. Create a file Dockerfile.bus in dockerfiles with below content.
+
++
+
+[source,java]
+---------------------------------------------------------------------
+FROM openjdk:11-jdk
+ARG JAR_FILE=application/business-server/build/libs/*.jar
+COPY ${JAR_FILE} app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+---------------------------------------------------------------------
+
+. Create a file Dockerfile.cat in dockerfiles with below content
+
++
+
+[source,java]
+---------------------------------------------------------------------
+FROM openjdk:11-jdk
+ARG JAR_FILE=application/category-server/build/libs/*.jar
+COPY ${JAR_FILE} app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+---------------------------------------------------------------------
+. To create docker images use the below commands. Please replace with your own docker hub user name'
+
++
+
+[source,java]
+---------------------------------------------------------------------
+docker build -f dockerfiles/Dockerfile.cat -t <docker-user-name>/category:distributed .
+docker build -f dockerfiles/Dockerfile.bus -t <docker-user-name>/business:distributed .
+---------------------------------------------------------------------
+
+. Test the docker images locally by running the below commands
+
++
+
+[source,java]
+---------------------------------------------------------------------
+docker run -p 8082:8082 -t <docker-user-name>/category:distributed
+docker run -p 8081:8081 -t <docker-user-name>/business:distributed
+---------------------------------------------------------------------
+
+. To push the images to docker hub use below commands
+
++
+
+[source,java]
+---------------------------------------------------------------------
+docker push <docker-user-name>/category:distributed
+docker push <docker-user-name>/business:distributed
+
+---------------------------------------------------------------------
+
+Kubernetizing the application
+
+. We need to create the following Kubernetes Deployment files under deployments folder
+. app-log-pvc.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: log-persistent-claim
+spec:
+ volumeMode: Filesystem
+ storageClassName: slow
+ accessModes:
+   - ReadWriteOnce
+ resources:
+   requests:
+     storage: 500Mi
+
+---------------------------------------------------------------------
+
+. app-log-pv.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+ name: log-persistent-volume
+ labels:
+   type: local
+spec:
+ volumeMode: Filesystem
+ storageClassName: slow
+ capacity:
+   storage: 500Mi
+ accessModes:
+   - ReadWriteOnce
+ hostPath:
+   path: "/mnt/logs"
+---------------------------------------------------------------------
+
+. business-deployment.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ labels:
+   app: business
+ name: business
+spec:
+ replicas: 2
+ selector:
+   matchLabels:
+     app: business
+ strategy: {}
+ template:
+   metadata:
+     labels:
+       app: business
+   spec:
+     volumes:
+     - name: log-volume
+       persistentVolumeClaim:
+         claimName: log-persistent-claim
+     containers:
+     - image: adityapratapbhuyan/business:distributed
+       imagePullPolicy: Always
+       name: business
+       volumeMounts:
+       - name: log-volume
+         mountPath: "/var/tmp/"
+       ports:
+       - containerPort: 8081
+       resources: {}
+status: {}
+---------------------------------------------------------------------
+
+. business-pod-deployment.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+ labels:
+   app: business
+ name: business
+spec:
+ volumes:
+ - name: log-volume
+   persistentVolumeClaim:
+     claimName: log-persistent-claim
+ containers:
+ - image: adityapratapbhuyan/business:distributed
+   imagePullPolicy: Always
+   name: business
+   volumeMounts:
+     - name: log-volume
+       mountPath: "/var/tmp/"
+   ports:
+   - containerPort: 8081
+   resources: {}
+ dnsPolicy: ClusterFirst
+ restartPolicy: Always
+status: {}
+---------------------------------------------------------------------
+
+. business-service.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: business
+  name: business
+spec:
+  ports:
+  - port: 8081
+    protocol: TCP
+    targetPort: 8081
+  selector:
+    app: business
+  type: NodePort
+status:
+  loadBalancer: {}
+---------------------------------------------------------------------
+
+. category-deployment.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: category
+  name: category
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: category
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: category
+    spec:
+      volumes:
+      - name: log-volume
+        persistentVolumeClaim:
+          claimName: log-persistent-claim
+      containers:
+      - image: adityapratapbhuyan/category:distributed
+        imagePullPolicy: Always
+        name: category
+        ports:
+        - containerPort: 8082
+        volumeMounts:
+        - name: log-volume
+          mountPath: "/var/tmp/"
+        resources: {}
+status: {}
+---------------------------------------------------------------------
+
+. category-pod-deployment.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: category
+  name: category
+spec:
+  volumes:
+  - name: log-volume
+    persistentVolumeClaim:
+        claimName: log-persistent-claim
+  containers:
+  - image: adityapratapbhuyan/category:distributed
+    imagePullPolicy: Always
+    name: category
+    volumeMounts:
+    - name: log-volume
+      mountPath: "/var/tmp/"
+    ports:
+    - containerPort: 8082
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+---------------------------------------------------------------------
+
+. category-service.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: category
+  name: category
+spec:
+  ports:
+  - port: 8082
+    protocol: TCP
+    targetPort: 8082
+  selector:
+    app: category
+  type: NodePort
+status:
+  loadBalancer: {}
+---------------------------------------------------------------------
+
+. mysql-secret.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: v1
+data:
+  mysql-pass: cGFzc3dvcmQ=
+kind: Secret
+metadata:
+  name: mysql-secret
+---------------------------------------------------------------------
+
+. mysql-client.sh
+
++
+
+[source,java]
+---------------------------------------------------------------------
+kubectl run -it --rm --image=mysql:8.0 --restart=Never mysql-client -- mysql -h mysql -ppassword
+---------------------------------------------------------------------
+
+. mysql-deployment.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:8.0
+        name: mysql
+        env:
+          # Instead of using value directly we could also use secrets
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-pass
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
+---------------------------------------------------------------------
+
+. mysql-pvc.yaml
+
 +
 
 [source,java]
 ---------------------------------------------------------------------
 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 ---------------------------------------------------------------------
+
+. mysql-pv.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: mysql-persistent-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+
+---------------------------------------------------------------------
+
+. mysql-service.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+  - port: 3306
+  clusterIP: None
+
+---------------------------------------------------------------------
+
+. Replace the put proper docker-user-name in all *-deployment.yaml files. Also imagePullPolicy could be removed. Please add executable permission on the mysql-client.sh file.
+
+. All the files would be executed in following order in kubernetes cluster.
+
++
+
+[source,java]
+---------------------------------------------------------------------
+
+kubectl apply -f  app-log-pvc.yaml
+kubectl apply -f  app-log-pv.yaml
+kubectl apply -f  mysql-pvc.yaml
+kubectl apply -f  mysql-pv.yaml
+kubectl apply -f  mysql-secret.yaml
+kubectl apply -f  mysql-service.yaml
+kubectl apply -f  mysql-deployment.yaml
+kubectl apply -f  category-service.yaml
+kubectl apply -f  category-deployment.yaml
+kubectl apply -f  business-service.yaml
+kubectl apply -f  business-deployment.yaml
+
+---------------------------------------------------------------------
+
+. Verify all the deployments  by using the following commands one by one
+
++
+
+[source,java]
+---------------------------------------------------------------------
+
+kubectl get pv
+kubectl get pvc
+kubectl get secret
+kubectl get deployment
+kubectl get pod
+kubectl get service
+---------------------------------------------------------------------
+. From the output of the last command, get the nodeport of business and category services. Then access the services using "http//:NodePort"
+
+. Push your changes to github
