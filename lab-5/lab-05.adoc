@@ -16,16 +16,12 @@ Before starting the lab, pull in the pipeline-start task.
    git cherry-pick pipeline-start
   
 
-As part of this cherry pick you will pipeline.yaml file under the folder ./github/workflows
-
-This is your pipeline file which gets executed on your every git commit.
-Replace the tag-name and docker-user-name appropriately in the pipeline .
+Follow the below steps to build your pipeline using Github Actions
 
 
+. Create the following secrets in your github repository. To create secrets access the settings section of your repository and select secrets.
 
-Create the following secrets in your github repository. To create secrets access the settings section of your repository and select secrets.
-
-
++
 
 [source,java]
 ---------------------------------------------------------------------
@@ -37,14 +33,90 @@ PKS_API
 PKS_CLUSTER
 ---------------------------------------------------------------------
 
-Push your code to git repository and wait till git actions starts the build and deploys to the  PKS cluster
+
+. Create the following directory .github/workflows and create a file called pipeline.yaml under it with below content
 
 
-
-Access your application 
++
 
 
 [source,java]
 ---------------------------------------------------------------------
-Browse to 
+name: Pages Pipeline
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Build with Gradle
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifact
+          path: build/libs/pages.jar
+
+      - name: build-docker-image
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: <docker-user-name>/pages
+          tags: <tag-name>
+  deploy-image-to-pks:
+    needs: build-artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Pivnet & PKS
+        run: |
+          sudo apt-get update
+          wget -O pivnet github.com/pivotal-cf/pivnet-cli/releases/download/v0.0.55/pivnet-linux-amd64-0.0.55 && chmod +x pivnet && sudo mv pivnet /usr/local/bin
+          pivnet login --api-token=cd8d86d24afa43b9bd989012adcbf3f5-r
+          pivnet download-product-files --product-slug='pivotal-container-service' --release-version='1.7.0' --product-file-id=646536
+          sudo mv pks-linux-amd64-1.7.0-build.483 pks
+          chmod +x pks
+          sudo mv pks /usr/local/bin/
+      - name: Install Kubectl
+        run: |
+          pivnet download-product-files --product-slug='pivotal-container-service' --release-version='1.7.0' --product-file-id=633728
+          sudo mv  kubectl-linux-amd64-1.16.7 kubectl
+          sudo mv kubectl /usr/local/bin/
+      - name: PKS Login
+        run: |
+          pks login -a ${{ secrets.PKS_API }}  ${{ secrets.PKS_CLUSTER }} -u ${{ secrets.PKS_USERNAME }} -k -p ${{ secrets.PKS_PASSWORD }}
+          pks get-credentials pks-workshop
+          kubectl apply -f deployment/pages-namespace.yaml
+          kubectl apply -f deployment/pages-config.yaml
+          kubectl apply -f deployment/pages-service.yaml
+          kubectl apply -f deployment/pages-deployment.yaml
+
 ---------------------------------------------------------------------
+
+. Replace the tag-name and docker-user-name with proper tag-name and your own docker user name.
+. Follow the below steps to create pivnet token as per your own account and put it in pipeline.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+1. Create an account using the link https://account.run.pivotal.io/z/uaa/sign-up
+2. Check your inbox and verify email, so that you can sign in successfully.
+3. Access https://network.pivotal.io/users/dashboard/edit-profile
+4. Create an API token and copy it.
+5. Update the token in the pages/.github/workflows/pipeline.yaml file under the workflow deploy-image-to-pks section in below line
+  pivnet login --api-token=<paste-your-token-here>
+---------------------------------------------------------------------
+
+. Push your code to git repository and wait till git actions starts the build and deploys to PKS cluster
