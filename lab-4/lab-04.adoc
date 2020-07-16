@@ -13,8 +13,7 @@ Before starting the lab, pull in the config-start task.
    
 == Externalize the welcome message
 
-.   Verify the HomeControllerTest.java file to check the change in test. The HomeController.java needs 
-    to be changed to pass the test case
+.   Verify the HomeControllerTest.java file to check the change in test. The HomeController.java needs to be changed to pass the test case.
 .   In HomeController.java create a String variable pageContent and intialize it through constructor
     using @Value annotation. Use the same variable in getPage() method to return welcome message.
 
@@ -65,6 +64,8 @@ test.environment([
 
 This would supply the value for pageContent during test and bootRun gradle tasks.
 
+Next let us build and run our container
+
 . Build and Test the application 
 
 +
@@ -86,14 +87,79 @@ docker build -t <docker_username>/<docker_repo>:config .
 
 [source,java]
 ---------------------------------------------------------------------
-docker run -p 8080:8080 -t <docker_username>/<docker_repo>:config
+docker run -p 8080:8080 <docker_username>/<docker_repo>:config
 ---------------------------------------------------------------------
 
 
-. Browse to 
+. Access your application
 +
 
 [source,java]
 ---------------------------------------------------------------------
 Browse to http://localhost:8080
 ---------------------------------------------------------------------
+
+. Push the image to docker
+
++
+
+[source,java]
+---------------------------------------------------------------------
+docker push <docker_username>/pages:config
+---------------------------------------------------------------------
+
+Running the container in Kubernetes
+
+. Create a new file *pages-config.yaml in deployment folder to initialize the variable in kubernetes. Use below content
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pages-config-map
+  namespace: <your-name>
+data:
+  PAGE_CONTENT: "Green-Pages coming from Yellow-world!"
+---------------------------------------------------------------------
+
+. In pages-deployment.yaml make changes to set the PAGE_CONTENT value reading from the ConfigMap. Add the below content inside container section
+
++
+
+[source,java]
+---------------------------------------------------------------------
+env:
+  - name: PAGE_CONTENT
+    valueFrom:
+      configMapKeyRef:
+        name: pages-config-map
+        key: PAGE_CONTENT
+---------------------------------------------------------------------
+
+. Run the following commands for minikube and pks to run the application in kubernetes cluster. Follow the previous lab to check the instructions to run the application in minikube and PKS. In the file pages-service.yaml value for type would be NodePort and LoadBalancer for minikube and pks respectively.
+
++
+
+[source,java]
+---------------------------------------------------------------------
+kubectl apply -f deployment/pages-namespace.yaml
+kubectl apply -f deployment/pages-config.yaml
+kubectl apply -f deployment/pages-service.yaml
+kubectl apply -f deployment/pages-deployment.yaml
+---------------------------------------------------------------------
+
+. Verify the deployment, configMap and service are created by using the following command
++
+
+[source,java]
+---------------------------------------------------------------------
+kubectl get deployment pages --namespace pages-<your-name>
+kubectl get cm pages-config-map  --namespace pages-<your-name>
+kubectl get service pages  --namespace pages-<your-name>
+---------------------------------------------------------------------
+. Identify the url of the pages service from the output above command. Refer to the previous lab for instructions to know the url of the service for both minikube and pks
+. Open the pages url in browser to test the application.
+. Push the code to github repository
