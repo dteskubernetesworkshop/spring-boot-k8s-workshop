@@ -1,4 +1,4 @@
-= Persist your data to in memory databse
+    = Persist your data to in memory databse
 
 == Learning Outcomes
 After completing the lab, you will be able to:
@@ -222,10 +222,5 @@ public class PageController {
 
 . Check in the code to start github actions to deploy in Cluster
 
-. Browse to 
-+
+. Verify the deployments in PKS Cluster and test the application by opening it in browser as per instructions given in previous labs 
 
-[source,java]
----------------------------------------------------------------------
-Browse to http://
----------------------------------------------------------------------
