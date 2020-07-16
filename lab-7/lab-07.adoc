@@ -282,14 +282,7 @@ spec:
   clusterIP: None
 ---------------------------------------------------------------------
 
-. Install a MySQL instance with no password for user root in local machine
-
-+
-
-[source,java]
----------------------------------------------------------------------
-
----------------------------------------------------------------------
+. Ensure that a MySQL instance with no password for user root in local machine is running
 
 
 . Build, Test and Run the application locally 
@@ -338,13 +331,6 @@ kubectl apply -f deployment/pages-service.yaml
 kubectl apply -f deployment/pages-deployment.yaml
 ---------------------------------------------------------------------
 
-. Finally push the code to the github so that github actions will start the pipeline and the application would be deployed in cluster
+. Finally push the code to the github so that github actions will start the pipeline and the application would be deployed in pks cluster
 
-
-. Access your application 
-+
-
-[source,java]
----------------------------------------------------------------------
-
----------------------------------------------------------------------
+. Verify the url of the service and access it in browser

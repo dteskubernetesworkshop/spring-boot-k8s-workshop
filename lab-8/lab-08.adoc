@@ -17,6 +17,14 @@ Before starting the lab, pull in the log-start task.
 == Adding PV & PVC for Logging.
 
 .   Create a log-pv.yaml under deployment directory
+.   Fill in the below sections 
+
+.. Assign name as log-persistent-volume under metadata section
+.. Assign volumeMode to FileSystem under spec
+.. Assign storageClassName to slow under spec
+.. Capacity storage would be 500Mi
+.. accessModes would be ReadWriteOnce
+.. hostPath would be "/mnt/logs"
 
 +
 [source,java]
@@ -39,6 +47,15 @@ spec:
 ---------------------------------------------------------------------
 
 .   Create a log-pvc.yaml under deployment directory
+.   Fill in the below sections 
+
+.. name would be log-persistent-claim
+.. volumeMode would be FileSystem under spec
+.. storageClassName would be slow under spec
+.. resources/requests/storage would be 500Mi
+.. accessModes would be ReadWriteOnce
+.. accessModes would be ReadWriteOnce
+
 
 +
 [source, java, numbered]
@@ -109,7 +126,7 @@ public class HomeController {
 }
 ---------------------------------------------------------------------
 
-. Run your application and verify the logs.
+. Few logging properties are added in application.properties files of test and source in above step.  Run your application and verify the logs.
 . Comment out the log properties in application.properties for both test and source.
 . Add logback.xml under resources folders of both test and source with basic logging configuration for FILE and STDOUT appender
 
@@ -235,16 +252,10 @@ kubectl apply -f deployment/log-pv.yaml
 kubectl apply -f deployment/log-pvc.yaml
 ---------------------------------------------------------------------
 
-. The application would be ready after 150 seconds as the readiness probe would start after 150 seconds
+. Push the code to github repository to start the pipeline
+. In PKS cluster the application ready time would be delayed. The application would be ready after 150 seconds as the readiness probe would start after 150 seconds
 . Keep on checking the status of the pod which is part of the pages deployment
 . After sometime though the status might be Running, it might be showing Not Ready
 
 
 
-. Access your application 
-+
-
-[source,java]
----------------------------------------------------------------------
-
----------------------------------------------------------------------
