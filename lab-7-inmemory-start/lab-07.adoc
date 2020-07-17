@@ -1,4 +1,4 @@
-    = Persist your data to in memory databse
+= Persist your data to in memory databse
 
 == Learning Outcomes
 After completing the lab, you will be able to:
@@ -11,7 +11,7 @@ Before starting the lab, pull in the config-start task.
    
    git cherry-pick inmemory-start
 
-As part of the inmemory-start checkout you would get two test classes for which you need to add the necessary code to make the test cases pass. 
+As part of the inmemory-start checkout 2 Test classes would be added to the codebase. On build the application would fail as there is no code to support the test cases. Follow the below instructions to reach solution so that the test cases will pass.
    
 == Follow the below instructions to reach to the solution.
 
@@ -21,7 +21,7 @@ As part of the inmemory-start checkout you would get two test classes for which 
 +
 [source,java]
 ---------------------------------------------------------------------
-ppackage org.dell.kube.pages;
+package org.dell.kube.pages;
 
 public class Page {
 

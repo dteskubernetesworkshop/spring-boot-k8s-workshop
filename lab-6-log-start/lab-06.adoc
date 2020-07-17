@@ -14,71 +14,13 @@ Before starting the lab, pull in the log-start task.
    git cherry-pick log-start
 
    
-== Adding PV & PVC for Logging.
+== Creating and Updating the Volume
 
-.   Create a log-pv.yaml under deployment directory
-.   Fill in the below sections 
+.   Add below properties in application.properties in both test and source
 
-.. Assign name as log-persistent-volume under metadata section
-.. Assign volumeMode to FileSystem under spec
-.. Assign storageClassName to slow under spec
-.. Capacity storage would be 500Mi
-.. accessModes would be ReadWriteOnce
-.. hostPath would be "/mnt/logs"
 
 +
 [source,java]
----------------------------------------------------------------------
-kind: PersistentVolume
-apiVersion: v1
-metadata:
-  name: log-persistent-volume
-  labels:
-    type: local
-spec:
-  volumeMode: Filesystem
-  storageClassName: manual
-  capacity:
-    storage: 500Mi
-  accessModes:
-  - ReadWriteMany
-  hostPath:
-    path: "/mnt/logs"
----------------------------------------------------------------------
-
-.   Create a log-pvc.yaml under deployment directory
-.   Fill in the below sections 
-
-.. name would be log-persistent-claim
-.. volumeMode would be FileSystem under spec
-.. storageClassName would be slow under spec
-.. resources/requests/storage would be 500Mi
-.. accessModes would be ReadWriteOnce
-.. accessModes would be ReadWriteOnce
-
-
-+
-[source, java, numbered]
----------------------------------------------------------------------
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
- name: log-persistent-claim
-spec:
- volumeMode: Filesystem
- storageClassName: manual
- accessModes:
- - ReadWriteMany
- resources:
-   requests:
-     storage: 500Mi
----------------------------------------------------------------------
-
-
-. Add below properties in application.properties in both test and source
-
-+
-[source, java, numbered]
 ---------------------------------------------------------------------
 logging.file.name=/var/tmp/pages-app.log
 debug=true
@@ -86,12 +28,15 @@ logging.level.org.springframework.web=debug
 logging.level.root=debug
 ---------------------------------------------------------------------
 
-. Make the following  changes  in HomeController.java
+.   Code change in HomeController
+
+
 .. Add a Logger from slf4j api
 .. Add debug,warn,trace,info and error messages in getPage() method
 
-+ 
-[source,java]
+
++
+[source, java, numbered]
 ---------------------------------------------------------------------
 package org.dell.kube.pages;
 
@@ -126,12 +71,15 @@ public class HomeController {
 }
 ---------------------------------------------------------------------
 
-. Few logging properties are added in application.properties files of test and source in above step.  Run your application and verify the logs.
-. Comment out the log properties in application.properties for both test and source.
-. Add logback.xml under resources folders of both test and source with basic logging configuration for FILE and STDOUT appender
 
-+ 
-[source,java]
+. Few logging properties are added in application.properties files of test and source in above step. Run your application and verify the logs
+. Comment the log properties from application.properties of both test and source.
+.  Add logback.xml under resources folders of both test and source with basic logging configuration for FILE and STDOUT appender
+
+
+
++
+[source, java, numbered]
 ---------------------------------------------------------------------
 <?xml version = "1.0" encoding = "UTF-8"?>
   <configuration>
@@ -155,16 +103,15 @@ public class HomeController {
           <appender-ref ref = "STDOUT"/>
       </root>
   </configuration>
-
 ---------------------------------------------------------------------
-
 
 . Add log volume details in pages-deployment.yaml
 
+
 . Add liveness and readiness probe information in pages-deployment.yaml
 
-+
 
++ 
 [source,java]
 ---------------------------------------------------------------------
 apiVersion: apps/v1
@@ -174,6 +121,7 @@ metadata:
     app: pages
     servicefor: pages
   name: pages
+  namespace: <your-name>
 spec:
   replicas: 1
   selector:
@@ -189,10 +137,9 @@ spec:
     spec:
       volumes:
       - name: log-volume
-        persistentVolumeClaim:
-          claimName: log-persistent-claim
+        emptyDir: {}
       containers:
-      - image: yourreponame/pages:logging
+      - image: adityapratapbhuyan/pages:logging
         imagePullPolicy: Always
         name: pages
         ports:
@@ -209,51 +156,48 @@ spec:
         readinessProbe:
           tcpSocket:
            port: 8080
-          initialDelaySeconds: 150
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          successThreshold: 2
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 150
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          successThreshold: 2
         resources: {}
 status: {}
 ---------------------------------------------------------------------
 
 . Build the application 
-+
 
++ 
 [source,java]
 ---------------------------------------------------------------------
 ./gradlew clean build
 ---------------------------------------------------------------------
 
+
 . Docker build and push the application with tag logging
 . Change the tag to logging in pages-deployment.yaml
-. Use the following commands to deploy the application in kubernetes
+. Use the following commands to deploy the application in Minikube kubernetes
+
 
 +
 
 [source,java]
 ---------------------------------------------------------------------
-kubectl apply -f deployment/log-pv.yaml
-kubectl apply -f deployment/log-pvc.yaml
+kubectl apply -f deployment/pages-namespace.yaml
 kubectl apply -f deployment/pages-config.yaml
 kubectl apply -f deployment/pages-service.yaml
+kubectl delete -f deployment/pages-deployment.yaml
 kubectl apply -f deployment/pages-deployment.yaml
 ---------------------------------------------------------------------
 
 . Change the value of tags in pipeline.yaml to logging
-. Put below instructions in pipeline.yaml to create pv and pvc, just above the statement "kubectl apply -f deployment/pages-config.yaml"
-+
-
-[source,java]
----------------------------------------------------------------------
-kubectl apply -f deployment/log-pv.yaml
-kubectl apply -f deployment/log-pvc.yaml
----------------------------------------------------------------------
-
 . Push the code to github repository to start the pipeline
-. In PKS cluster the application ready time would be delayed. The application would be ready after 150 seconds as the readiness probe would start after 150 seconds
+. In PKS cluster the application ready time would be delayed. The application would be ready after 15 seconds as the readiness probe would start after 150 seconds
 . Keep on checking the status of the pod which is part of the pages deployment
 . After sometime though the status might be Running, it might be showing Not Ready
 
