@@ -82,13 +82,17 @@ out/
 
 . Open the project in Intellij Idea, select the import gradle project option in low right corner and set project SDK to JDK 11
 
+. This will make it a multi-project gradle. To do this Right Click on the root project ---> New ---> Module ---> Select Module as Gradle and Library as Java ---> Enter the module name as mention above It would also create the default build.gradle file in each module, which we would change later.
+
+
 . Create four modules under the root project namely
 .. components/business
 .. components/category
 .. application/business-server
 .. application/category-server
 
-. This will make it a multi-project gradle. To do this Right Click on the root project ---> New ---> Module ---> Select Module as Gradle and Library as Java ---> Enter the module name as mention above It would also create the default build.gradle file in each module, which we would change later.
+
+
 
 . Create a settings.gradle file in the project directory with the following  content to it.
 
@@ -103,6 +107,8 @@ include 'application:category-server'
 ---------------------------------------------------------------------
 
 . Create src/main/java and src/main/resources folder under all the modules. Ensure that both these folders are marked as Sources Root and Resources Root respectively in all the four modules.
+
+. Commit the changes locally in the git repository. Don't push to remote repo.
 
 . Create a server.gradle file under application
 
@@ -1006,19 +1012,18 @@ Local Testing of the application
 Dockerizing both the applications
 
 . In both the src/main/resources/application.properties comment the properties under For Testing locally section and uncomment the properties under For Deployment in Kubernetes section
-. Execute the below commands to build it afresh.
+. Execute the below commands to build it fresh.
 
 +
 
 [source,java]
 ---------------------------------------------------------------------
 ./gradlew clean
-./gradlew :application:category-server:build 
-./gradlew :application:business-server:build 
+./gradlew :application:category-server:build
+./gradlew :application:business-server:build
 ---------------------------------------------------------------------
-
 . Create a directory dockerfiles under the project root.
-. Create a file Dockerfile.bus in dockerfiles with below content.
+. Create a file Dockerfile-business in dockerfiles with below content
 
 +
 
@@ -1030,7 +1035,8 @@ COPY ${JAR_FILE} app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]
 ---------------------------------------------------------------------
 
-. Create a file Dockerfile.cat in dockerfiles with below content
+. Create a file Dockerfile-category in dockerfiles with below content
+
 
 +
 
@@ -1041,6 +1047,8 @@ ARG JAR_FILE=application/category-server/build/libs/*.jar
 COPY ${JAR_FILE} app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]
 ---------------------------------------------------------------------
+
+
 . To create docker images use the below commands. Please replace with your own docker hub user name'
 
 +
@@ -1074,7 +1082,21 @@ docker push <docker-user-name>/business:distributed
 
 Kubernetizing the application
 
-. We need to create the following Kubernetes Deployment files under deployments folder
+. In both business-server and category-server, in the src/main/resources/application.properties comment the all the properties present under For Testing locally section and uncomment all the properties present under For Deployment in Kubernetes section
+. Create a deployments folder under the root folder. We need to create the following Kubernetes Deployment files under deployments folder
+
+. dist-namespace.yaml
+
++
+
+[source,java]
+---------------------------------------------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: <your-name>
+---------------------------------------------------------------------
+
 . app-log-pvc.yaml
 
 +
@@ -1085,15 +1107,15 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
  name: log-persistent-claim
+ namespace: <your-name>
 spec:
  volumeMode: Filesystem
- storageClassName: slow
+ storageClassName: pv-<your-name>
  accessModes:
    - ReadWriteOnce
  resources:
    requests:
      storage: 500Mi
-
 ---------------------------------------------------------------------
 
 . app-log-pv.yaml
@@ -1106,11 +1128,12 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
  name: log-persistent-volume
+ namespace: <your-name>
  labels:
    type: local
 spec:
  volumeMode: Filesystem
- storageClassName: slow
+ storageClassName: pv-<your-name>
  capacity:
    storage: 500Mi
  accessModes:
@@ -1131,6 +1154,7 @@ metadata:
  labels:
    app: business
  name: business
+namespace: <your-name>
 spec:
  replicas: 2
  selector:
@@ -1171,6 +1195,7 @@ metadata:
  labels:
    app: business
  name: business
+namespace: <your-name>
 spec:
  volumes:
  - name: log-volume
@@ -1203,6 +1228,7 @@ metadata:
   labels:
     app: business
   name: business
+namespace: <your-name>
 spec:
   ports:
   - port: 8081
@@ -1227,6 +1253,7 @@ metadata:
   labels:
     app: category
   name: category
+  namespace: <your-name>
 spec:
   replicas: 2
   selector:
@@ -1267,6 +1294,7 @@ metadata:
   labels:
     app: category
   name: category
+namespace: <your-name>
 spec:
   volumes:
   - name: log-volume
@@ -1299,6 +1327,7 @@ metadata:
   labels:
     app: category
   name: category
+namespace: <your-name>
 spec:
   ports:
   - port: 8082
@@ -1344,6 +1373,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
+namespace: <your-name>
   labels:
     app: mysql
 spec:
@@ -1391,6 +1421,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mysql-pv-claim
+namespace: <your-name>
 spec:
   storageClassName: manual
   accessModes:
@@ -1402,6 +1433,8 @@ spec:
 
 . mysql-pv.yaml
 
+
+
 +
 
 [source,java]
@@ -1411,6 +1444,7 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: mysql-persistent-volume
+namespace: <your-name>
   labels:
     type: local
 spec:
@@ -1435,6 +1469,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: mysql
+namespace: <your-name>
   labels:
     app: mysql
 spec:
@@ -1446,30 +1481,210 @@ spec:
 
 ---------------------------------------------------------------------
 
-. Replace the put proper docker-user-name in all *-deployment.yaml files. Also imagePullPolicy could be removed. Please add executable permission on the mysql-client.sh file.
+. Replace the value of <docker-user-name> with proper docker-user-name in all *-deployment.yaml files. Also remove imagePullPolicy .
+Add executable permission on the mysql-client.sh file.
 
-. All the files would be executed in following order in kubernetes cluster.
+Code Changes for Pipeline
+
+. Add the folowing in application/business-server/build.gradle
++
+
+[source,java]
+---------------------------------------------------------------------
+
+test.environment([
+        "SPRING_DATASOURCE_USERNAME": "root",
+        "SPRING_DATASOURCE_PASSWORD": "root",
+		"SPRING_DATASOURCE_URL": "jdbc:mysql://localhost:3306/business?createDatabaseIfNotExist=true&useSSL=false&user=root",
+])
+
+---------------------------------------------------------------------
+. Add the folowing in application/category-server/build.gradle
++
+
+[source,java]
+---------------------------------------------------------------------
+
+test.environment([
+        "SPRING_DATASOURCE_USERNAME": "root",
+        "SPRING_DATASOURCE_PASSWORD": "root",
+		"SPRING_DATASOURCE_URL": "jdbc:mysql://localhost:3306/category?createDatabaseIfNotExist=true&useSSL=false&user=root",
+])
+---------------------------------------------------------------------
+
+. Create the following secrets in your github repository
++
+
+[source,java]
+---------------------------------------------------------------------
+
+DOCKER_USERNAME [Your own docker account user name]
+DOCKER_PASSWORD [Your own docker account login password ]
+PKS_API [Get it from the instructor]
+PKS_USERNAME [Get it from the instructor]
+PKS_PASSWORD [Get it from the instructor]
+PKS_CLUSTER [Get it from the instructor]
+PKS_TOKEN [Follow the below steps to create it]
+---------------------------------------------------------------------
 
 +
 
 [source,java]
 ---------------------------------------------------------------------
 
-kubectl apply -f  app-log-pvc.yaml
-kubectl apply -f  app-log-pv.yaml
-kubectl apply -f  mysql-pvc.yaml
-kubectl apply -f  mysql-pv.yaml
-kubectl apply -f  mysql-secret.yaml
-kubectl apply -f  mysql-service.yaml
-kubectl apply -f  mysql-deployment.yaml
-kubectl apply -f  category-service.yaml
-kubectl apply -f  category-deployment.yaml
-kubectl apply -f  business-service.yaml
-kubectl apply -f  business-deployment.yaml
+1. Create an account using the link https://account.run.pivotal.io/z/uaa/sign-up
+2. Check your inbox and verify email, so that you can sign in successfully.
+3. Access https://network.pivotal.io/users/dashboard/edit-profile
+4. Create an API token and copy it.
+5. Use it as the value for PKS_TOKEN
+---------------------------------------------------------------------
+
+. Create .github/workflows directory under root project and create pipeline.yaml file with below content
+
++
+
+[source,java]
+---------------------------------------------------------------------
+
+name: PeloPages Distributed Pipeline
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Start Ubuntu MySQL
+        run: sudo systemctl start mysql.service
+      - name: Build with Gradle
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: build
+          gradle-version: 6.4
+      - name: Verify Build
+        run: |
+           ls -l application/business-server/build/libs
+           ls -l application/category-server/build/libs
+           echo "Build Fine"
+      - name: Upload Artifact Business
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifact
+          path: application/business-server/build/libs/business-1.0-SNAPSHOT.jar
+      - name: Upload Artifact Category
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifact
+          path: application/category-server/build/libs/category-1.0-SNAPSHOT.jar
+      - name: build-docker-image-business
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: <docker-your-name>/business
+          tags: distributed
+          dockerfile: dockerfiles/Dockerfile-business
+      - name: build-docker-image-category
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: <docker-user-name>/category
+          tags: distributed
+          dockerfile: dockerfiles/Dockerfile-category
+  deploy-image-to-pks:
+    needs: build-artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Pivnet & PKS
+        run: |
+          sudo apt-get update
+          wget -O pivnet github.com/pivotal-cf/pivnet-cli/releases/download/v0.0.55/pivnet-linux-amd64-0.0.55 && chmod +x pivnet && sudo mv pivnet /usr/local/bin
+          pivnet login --api-token=${{ secrets.PKS_TOKEN }}
+          pivnet download-product-files --product-slug='pivotal-container-service' --release-version='1.7.0' --product-file-id=646536
+          sudo mv pks-linux-amd64-1.7.0-build.483 pks
+          chmod +x pks
+          sudo mv pks /usr/local/bin/
+      - name: Install Kubectl
+        run: |
+          pivnet download-product-files --product-slug='pivotal-container-service' --release-version='1.7.0' --product-file-id=633728
+          sudo mv  kubectl-linux-amd64-1.16.7 kubectl
+          sudo mv kubectl /usr/local/bin/
+      - name: PKS Login
+        run: |
+          pks login -a ${{ secrets.PKS_API }}   -u ${{ secrets.PKS_USERNAME }} -k -p ${{ secrets.PKS_PASSWORD }}
+          pks get-credentials ${{ secrets.PKS_CLUSTER }}
+
+          kubectl apply -f deployments/dist-namespace.yaml
+          kubectl apply -f deployments/app-log-pvc.yaml
+          kubectl apply -f deployments/app-log-pv.yaml
+          kubectl apply -f deployments/mysql-pv.yaml
+          kubectl apply -f deployments/mysql-pvc.yaml
+          kubectl apply -f deployments/mysql-service.yaml
+          kubectl apply -f deployments/mysql-secret.yaml
+          kubectl apply -f deployments/mysql-deployment.yaml
+          kubectl apply -f deployments/category-service.yaml
+          kubectl apply -f deployments/category-deployment.yaml
+          kubectl apply -f deployments/business-service.yaml
+          kubectl apply -f deployments/business-deployment.yaml
+---------------------------------------------------------------------
+
+. In all the files replace <docker-user-name> with your own docker-user-name and replace <user-name> with your own first name
+. Push your code to github repository so that Github Actions would build, test, dockerize the application and finally deploy it on kubernetes cluster.
+. The pipeline would create a namespace with <your-name> and create all the objects inside it.
+
+. All the files would be executed in following order in kubernetes cluster if pipeline is not used.
+
++
+
+[source,java]
+---------------------------------------------------------------------
+
+kubectl apply -f deployments/dist-namespace.yaml
+kubectl apply -f deployments/app-log-pvc.yaml
+kubectl apply -f deployments/app-log-pv.yaml
+kubectl apply -f deployments/mysql-pv.yaml
+kubectl apply -f deployments/mysql-pvc.yaml
+kubectl apply -f deployments/mysql-service.yaml
+kubectl apply -f deployments/mysql-secret.yaml
+kubectl apply -f deployments/mysql-deployment.yaml
+kubectl apply -f deployments/category-service.yaml
+kubectl apply -f deployments/category-deployment.yaml
+kubectl apply -f deployments/business-service.yaml
+kubectl apply -f deployments/business-deployment.yaml
 
 ---------------------------------------------------------------------
 
-. Verify all the deployments  by using the following commands one by one
+
+.  If business and category deployments are already available in the cluster and your are trying to re-deploy.
+always delete the deployments using below commands.
++
+
+[source,java]
+---------------------------------------------------------------------
+kubectl delete -f deployments/category-deployment.yaml
+kubectl delete -f deployments/business-deployment.yaml
+---------------------------------------------------------------------
+
+. Execute the below command in kubernetes cluster to set your default namespace
+
++
+
+[source,java]
+---------------------------------------------------------------------
+kubectl config set-context --current --namespace=<your-name>
+---------------------------------------------------------------------
+
+. Verify all the deployments  by using the following commands sequentially.
 
 +
 
@@ -1483,6 +1698,15 @@ kubectl get deployment
 kubectl get pod
 kubectl get service
 ---------------------------------------------------------------------
-. From the output of the last command, get the nodeport of business and category services. Then access the services using "http//:NodePort"
+. From the output of the last command, get the url of business and category services. Then access the services using "http//<external-ip>:Port" on browser.
+. If the service is of type NodePort, use the following command to port forward the services to access it.
 
-. Push your changes to github
++
+
+[source,java]
+---------------------------------------------------------------------
+
+kubectl port-forward service/business 8081:8081
+---------------------------------------------------------------------
+
+. Run the above command in a terminal and access the application at http://localhost:8081. To stop port forward use CTRL+C.
