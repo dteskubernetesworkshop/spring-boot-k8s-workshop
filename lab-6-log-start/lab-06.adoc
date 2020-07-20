@@ -3,7 +3,7 @@
 == Learning Outcomes
 After completing the lab, you will be able to:
 
- . Persist your log in Kubernetes using persistence volume & persistence volume claim
+
  . Use sl4j for your logging 
  . Add liveness and readiness probe information to your application 
 
