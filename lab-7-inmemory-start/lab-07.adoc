@@ -161,7 +161,7 @@ public class InMemoryPageRepository implements IPageRepository{
 ---------------------------------------------------------------------
 
 . Create a bean called pageRepository in PageApplication.java which returns an implementation of IPageRepository
-. Create a PageController.java in src folder. Create an Instance of IPageRepository and intialiase it with a constructor injection
+. Create a PageController.java in src folder. Create an Instance of IPageRepository and initialize  it with a constructor injection
 + 
 [source,java]
 ---------------------------------------------------------------------

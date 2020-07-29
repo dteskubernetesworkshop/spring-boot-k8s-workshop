@@ -9,11 +9,11 @@ After completing the lab, you will be able to:
 . Create secret to store MySQL credentials.
 
  
-Before starting the lab, pull in the config-start task.
+Before starting the lab, pull in the persistence-start task.
    
    git cherry-pick persistence-start
 
-As part of the persistence-start checkout you would get two test classes for which you need to add the necessary code to make the test cases pass. 
+As part of the persistence-start checkout you would get one test class for which you need to add the necessary code to make the test cases pass.
    
 == Follow the below instructions to reach to the solution.
 
@@ -286,10 +286,9 @@ spec:
   clusterIP: None
 ---------------------------------------------------------------------
 
+. Replace all the <your-name> with your actual first name.
 . Ensure that a MySQL instance with no password for user root in local machine is running
-
-
-. Build, Test and Run the application locally 
+. Build, Test and Run the application locally
 +
 
 [source,java]
@@ -321,26 +320,30 @@ spring.datasource.password=password
 
 
 
-. Build, Test and Run the application locally 
+. Build the application using the following command
 +
 
 [source,java]
 ---------------------------------------------------------------------
 ./gradlew clean
-./gradlew build -x test 
+./gradlew build
 ---------------------------------------------------------------------
 
-. Docker build and publish the image with tag persist
-. Make change in the pages-deployment.yaml and pipeline.yaml to update the tag
-. In the pipeline.yaml add "./gradlew clean build -x test" instead of "./gradlew clean build"
-. Change the pipeline.yaml to use the new mysql related yaml files. The last section of the pipeline file would appear as below
+
+. Make change in the pages-deployment.yaml and pipeline.yaml to update the tag as persist
+. Add the below content in pipeline.yaml just above the line "- name: Build with Gradle"
+
 +
 
 [source,java]
 ---------------------------------------------------------------------
+- name: Start Ubuntu MySQL
+  run: sudo systemctl start mysql.service
+---------------------------------------------------------------------
+. Change the pipeline.yaml to use the new mysql related yaml files. The last section should look like below
+[source,java]
+---------------------------------------------------------------------
 kubectl apply -f deployment/pages-namespace.yaml
-kubectl apply -f deployment/log-pv.yaml
-kubectl apply -f deployment/log-pvc.yaml
 kubectl apply -f deployment/mysql-pv.yaml
 kubectl apply -f deployment/mysql-secret.yaml
 kubectl apply -f deployment/mysql-deployment.yaml
