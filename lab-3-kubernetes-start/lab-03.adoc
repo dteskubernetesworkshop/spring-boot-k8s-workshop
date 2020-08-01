@@ -139,3 +139,12 @@ git add .
 git commit -m "commit message"
 git push -u origin master 
 ---------------------------------------------------------------------
+
+== Accessing the Kubernetes Dashboard on PKS
+
+=== Run the following command to start proxying the Kubernetes dashboard on PKS
+
+    . kubectl proxy &
+    . Wait for the output - Starting to serve on 127.0.0.1:8001
+    . Open the dashboard at  http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+    . You need to provide the config file located under &home/.kube directory. Click on the three dots after 'choose kubeconfig file' .To see the file under the .kube folder , right click and select show hidden files.
