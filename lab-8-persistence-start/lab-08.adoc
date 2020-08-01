@@ -11,7 +11,7 @@ After completing the lab, you will be able to:
  
 Before starting the lab, pull in the persistence-start task.
    
-   git cherry-pick persistence-start
+   git checkout persistence-start
 
 As part of the persistence-start checkout you would get one test class for which you need to add the necessary code to make the test cases pass.
    

@@ -9,7 +9,7 @@ After completing the lab, you will be able to:
  
 Before starting the lab, pull in the config-start task.
    
-   git cherry-pick inmemory-start
+   git checkout inmemory-start
 
 As part of the inmemory-start checkout 2 Test classes would be added to the codebase. On build the application would fail as there is no code to support the test cases. Follow the below instructions to reach solution so that the test cases will pass.
    

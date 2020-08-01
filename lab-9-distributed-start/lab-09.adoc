@@ -130,7 +130,7 @@ Ensure that both these folders are marked as Sources Root and Resources Root res
 
 . pull in the distributed-start task.
    
-   git cherry-pick distributed-start
+   git checkout distributed-start
 
 As part of the distributed-start checkout you would get two test classes for which you need to add the necessary code to make the test cases pass. 
    
