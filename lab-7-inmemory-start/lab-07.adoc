@@ -15,7 +15,7 @@ As part of the inmemory-start checkout 2 Test classes would be added to the code
    
 == Follow the below instructions to reach to the solution.
 
-.   Create new Java class  Pages.java under org.dell.kube.pages
+.   Create new Java class  Page.java under org.dell.kube.pages
  
 
 +
