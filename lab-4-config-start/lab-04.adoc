@@ -9,7 +9,7 @@ After completing the lab, you will be able to:
  
 Before starting the lab, pull in the config-start task.
    
-   git cherry-pick config-start
+   git checkout -b config-work config-start
    
 == Externalize the welcome message
 
@@ -163,3 +163,5 @@ kubectl get service pages  --namespace pages-<your-name>
 . Identify the url of the pages service from the output above command. Refer to the previous lab for instructions to know the url of the service for both minikube and pks
 . Open the pages url in browser to test the application.
 . Push the code to github repository
+-- git push origin config-work:master -f
+
