@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: category
+  name: category
+  namespace: <your-name>
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: category
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: category
+    spec:
+      volumes:
+      - name: mysql-persistent-storage-category
+        emptyDir: {}
+      - name: log-volume
+        persistentVolumeClaim:
+          claimName: log-persistent-claim-<your-name>
+      containers:
+      - image: mysql:8.0
+        name: mysql
+        env:
+        - name:  MYSQL_ROOT_PASSWORD
+          value: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage-category
+          mountPath: /var/lib/mysql-category-<your-name>
+      - image: <your-docker-user>/category:distributed
+        imagePullPolicy: Always
+        name: category
+        env:
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: password
+        - name: SPRING_DATASOURCE_USER
+          value: root
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://localhost:3306/category?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&user=root"
+        ports:
+        - containerPort: 8082
+        volumeMounts:
+        - name: log-volume
+          mountPath: "/var/tmp/"
+        resources: {}
+status: {}

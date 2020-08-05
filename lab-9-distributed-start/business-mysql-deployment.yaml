@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: business
+  name: business
+  namespace: <your-name>
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: business
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: business
+    spec:
+      volumes:
+      - name: mysql-persistent-storage-business
+        emptyDir: {}
+      - name: log-volume
+        persistentVolumeClaim:
+          claimName: log-persistent-claim-<your-name>
+      containers:
+      - image: mysql:8.0
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage-business
+          mountPath: /var/lib/mysql-business-<your-name>
+      - image: <your-name>/business:distributed
+        imagePullPolicy: Always
+        name: business
+        env:
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: password
+        - name: SPRING_DATASOURCE_USER
+          value: root
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://localhost:3306/business?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&user=root"
+        - name: CATEGORY_URL
+          value: "http://category:8082/category"
+        volumeMounts:
+        - name: log-volume
+          mountPath: "/var/tmp/"
+        ports:
+        - containerPort: 8081
+        resources: {}
+status: {}
