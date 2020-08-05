@@ -31,7 +31,7 @@ spec:
         - name: SPRING_DATASOURCE_USER
           value: root
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:mysql://localhost:3306/pages?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&user=root"
+          value: "jdbc:mysql://localhost:3306/category?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&user=root"
         ports:
         - containerPort: 3306
           name: mysql
